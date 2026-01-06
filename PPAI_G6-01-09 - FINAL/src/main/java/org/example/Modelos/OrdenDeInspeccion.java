@@ -1,0 +1,104 @@
+package org.example.Modelos;
+
+import java.time.LocalDateTime;
+
+public class OrdenDeInspeccion {
+
+    private LocalDateTime fechaHoraCierre; // cuando actualiza el estado a cerrada setea su fecha de cierre.
+    private LocalDateTime fechaFinalizacion; //para ordenes completamente realizadas
+    private Integer numeroDeOrden;
+    private String observacionCierre;
+    private Empleado empleado;
+    private Estado estado;
+    private EstacionSismologica estacionSismologica;
+
+    public OrdenDeInspeccion() {
+    }
+
+    public OrdenDeInspeccion(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraCierre, LocalDateTime fechaHoraFinalizacion, Integer numeroDeOrden, String observacionCierre, Empleado empleado, Estado estado, EstacionSismologica estacionSismologica) {
+        this.fechaHoraCierre = fechaHoraCierre;
+        this.fechaFinalizacion = fechaHoraFinalizacion;
+        this.numeroDeOrden = numeroDeOrden;
+        this.observacionCierre = observacionCierre;
+        this.empleado = empleado;
+        this.estado = estado;
+        this.estacionSismologica = estacionSismologica;
+    }
+
+    // --- Getters / setters básicos ---
+    public LocalDateTime getFechaHoraCierre() { return fechaHoraCierre; }
+
+    public void setFechaHoraFinalizacion(LocalDateTime fechaHoraFinalizacion) { this.fechaFinalizacion = fechaHoraFinalizacion; }
+
+    public void setNumeroDeOrden(Integer numeroDeOrden) { this.numeroDeOrden = numeroDeOrden; }
+
+    public String getObservacionCierre() { return observacionCierre; }
+    public void setObservacionCierre(String observacionCierre) { this.observacionCierre = observacionCierre; }
+
+    public Empleado getEmpleado() { return empleado; }
+    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
+
+    public Estado getEstado() { return estado; }
+
+    public EstacionSismologica getEstacionSismologica() {
+        return estacionSismologica;
+    }
+
+    public void setEstacionSismologica(EstacionSismologica estacionSismologica) {
+        this.estacionSismologica = estacionSismologica;
+    }
+
+    //  PASO 2
+    public boolean esEmpleado(Empleado empleadoActual) {
+        return this.empleado != null && this.empleado.equals(empleadoActual);
+    }
+
+    public boolean esCompletamenteRealizada(){
+        return estado != null && estado.esCompletamenteRealizada();
+    }
+
+
+    public String getDatos() {
+        Integer numeroOrden = this.getNumeroDeOrden();
+        LocalDateTime fechaFin = this.getFechaHoraFinalizacion();
+        String nombreEstacion = this.obtenerIdentificador(); // ya delega a estación
+        Integer idSismografo = null;
+        if (estacionSismologica != null) {
+            idSismografo = estacionSismologica.obtenerIdentificadorSismografo(); // flecha del diagrama
+        }
+
+        return "Orden N°: " + numeroOrden +
+                ", Finalizada: " + fechaFin +
+                ", Estación: " + nombreEstacion +
+                ", Sismógrafo ID: " + (idSismografo != null ? idSismografo : "-");
+    }
+
+    public Integer getNumeroDeOrden() { return numeroDeOrden; }
+
+    public LocalDateTime getFechaHoraFinalizacion() { return fechaFinalizacion; }
+
+    public String obtenerIdentificador() {
+        return (estacionSismologica != null) ? estacionSismologica.getNombre() : "-";
+    }
+    //FIN PASO 2
+
+    // Paso 11: cerrar() Cambia el estado interno de la orden a "Cerrada".
+    public void cerrar(Estado estadoCerrada, LocalDateTime fechaHoraActual) {
+        setEstado(estadoCerrada);
+
+        // Guarda la fecha y hora actual como la fecha de cierre.
+        setFechaHoraCierre(fechaHoraActual);
+    }
+
+    //Paso 11 setEstado(): cambia el estado del objeto
+    public void setEstado(Estado estado) { this.estado = estado; }
+
+    //Paso 11 setFechaHoraCierre():guarda la fecha y hora de cierre en el objeto
+    public void setFechaHoraCierre(LocalDateTime fechaHoraCierre) { this.fechaHoraCierre = fechaHoraCierre; }
+
+    @Override
+    public String toString() {
+        return "Orden N° " + numeroDeOrden + " - " + fechaFinalizacion.toLocalDate();
+    }
+
+}
