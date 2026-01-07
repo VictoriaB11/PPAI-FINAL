@@ -8,18 +8,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.example.Persistencia.DbInit; // Para crear tablas al arrancar.
+import org.example.Persistencia.SeedData; // Para cargar datos iniciales.
+import org.example.Persistencia.MotivoTipoDAO; // Para leer los motivos desde la BD.
+import org.example.Persistencia.EstadoDAO;
+
 
 public class MainCU37Test {
     public static void main(String[] args) {
 
-        // --- CREACIÓN DE DATOS DE PRUEBA ---
-
         // Estados
-        Estado estadoRealizada = new Estado("Completamente Realizada", "...", "Orden de Inspeccion");
-        Estado estadoCerrada = new Estado("Cerrada", "...", "Orden de Inspeccion");
-        Estado estadoFS = new Estado("Fuera de Servicio", "...", "Sismografo");
-        Estado estadoInhabilitado = new Estado("Inhabilitado por inspeccion", "...", "Sismografo");
-        List<Estado> estadosDelSistema = Arrays.asList(estadoRealizada, estadoCerrada, estadoFS, estadoInhabilitado);
+        EstadoDAO estadoDAO = new EstadoDAO();
+        List<Estado> estadosDelSistema = estadoDAO.listarTodos();
+        Estado estadoRealizada = buscarEstado(estadosDelSistema, "Completamente Realizada", "Orden de Inspeccion");
+        Estado estadoCerrada = buscarEstado(estadosDelSistema, "Cerrada", "Orden de Inspeccion");
+        Estado estadoFS = buscarEstado(estadosDelSistema, "Fuera de Servicio", "Sismografo");
+        Estado estadoInhabilitado = buscarEstado(estadosDelSistema, "Inhabilitado por inspeccion", "Sismografo");
+
 
         // Rol, Empleado, Usuario y Sesión
         Rol rol = new Rol("...", "Responsable de Inspeccion");
@@ -59,10 +64,11 @@ public class MainCU37Test {
         orden2.setEmpleado(empleado);
         List<OrdenDeInspeccion> ordenes = Arrays.asList(orden1, orden2);
 
-        // Motivos
-        MotivoTipo m1 = new MotivoTipo("Falta calibracion");
-        MotivoTipo m2 = new MotivoTipo("Sensor dañado");
-        List<MotivoTipo> motivos = Arrays.asList(m1, m2);
+        //Motivo tipo:
+        DbInit.init(); //  Crea tablas si no existen, para que no falle el SELECT/INSERT.
+        SeedData.seedMotivos(); //  Inserta motivos base si no estaban.
+        MotivoTipoDAO motivoDAO = new MotivoTipoDAO(); //  Creamos DAO para leer desde BD.
+        List<MotivoTipo> motivos = motivoDAO.listar(); //  Ahora la lista motivos ya viene de la BD
 
 
         SwingUtilities.invokeLater(() -> {
@@ -71,4 +77,17 @@ public class MainCU37Test {
             new MenuPrincipal(sesion, ordenes, motivos, estadosDelSistema, sismografosDelSistema);
         });
     }
+
+    private static Estado buscarEstado(List<Estado> estados, String nombre, String ambito) {
+        for (Estado e : estados) {
+            if (e.getNombre().equals(nombre) && e.getAmbito().equals(ambito)) {
+                return e;
+            }
+        }
+        throw new RuntimeException("No se encontró el estado: " + nombre + " (" + ambito + ")");
+    }
 }
+
+
+
+
