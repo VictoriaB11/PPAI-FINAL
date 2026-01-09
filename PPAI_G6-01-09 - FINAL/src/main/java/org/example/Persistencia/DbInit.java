@@ -15,8 +15,10 @@ public class DbInit {
 
              Statement st = conn.createStatement()) {
             // Crea un Statement a partir de la conexión para ejecutar SQL.
+            st.execute("PRAGMA foreign_keys = ON;"); //Activar clases foraneas
 
-                                 //MOTIVO TIPO
+
+            //MOTIVO TIPO
             st.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS motivo_tipo (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +46,47 @@ public class DbInit {
             // descripcion: texto libre (puede ser "...").
             // ambito: a qué objeto aplica (ej "Orden de Inspeccion" o "Sismografo").
             // UNIQUE(nombre, ambito): evita duplicados si corrés seed varias veces.
+
+
+                                     //SISMOGRAFO
+                        st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS sismografo (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    estado_actual_cambio_id INTEGER,
+                    FOREIGN KEY (estado_actual_cambio_id) REFERENCES cambio_estado(id)
+                );
+            """);
+            // Guarda sismógrafos.
+                // estado_actual_cambio_id apunta al último cambio de estado (cambio_estado).
+
+                                     //CAMBIO_ESTADO
+                        st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS cambio_estado (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sismografo_id INTEGER NOT NULL,
+                    estado_id INTEGER NOT NULL,
+                    fecha_hora TEXT NOT NULL,
+                    empleado_nombre TEXT,
+                    FOREIGN KEY (sismografo_id) REFERENCES sismografo(id),
+                    FOREIGN KEY (estado_id) REFERENCES estado(id)
+                );
+            """);
+            // Guarda cada cambio de estado del sismógrafo (historial).
+              // fecha_hora TEXT: lo guardamos como string ISO (ej: 2026-01-08T20:30:00).
+
+                             //CAMBIO_ESTADO_MOTIVO
+                        st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS cambio_estado_motivo (
+                    cambio_estado_id INTEGER NOT NULL,
+                    motivo_tipo_id INTEGER NOT NULL,
+                    PRIMARY KEY (cambio_estado_id, motivo_tipo_id),
+                    FOREIGN KEY (cambio_estado_id) REFERENCES cambio_estado(id),
+                    FOREIGN KEY (motivo_tipo_id) REFERENCES motivo_tipo(id)
+                );
+            """);
+            // Relación muchos-a-muchos:
+            //  un cambio_estado puede tener varios motivo_tipo.
+
 
 
         } catch (Exception e) {

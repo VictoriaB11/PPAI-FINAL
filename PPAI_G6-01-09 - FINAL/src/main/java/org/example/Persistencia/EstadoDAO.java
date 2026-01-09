@@ -75,4 +75,26 @@ public class EstadoDAO {
             throw new RuntimeException("Error listando estados", e);
         }
     }
+
+    //PARA OBTENERS LOS IDs
+    public int obtenerIdPorNombreYAmbito(String nombre, String ambito) {
+        String sql = "SELECT id FROM estado WHERE nombre = ? AND ambito = ?";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, nombre);
+            ps.setString(2, ambito);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+            }
+
+            throw new RuntimeException("No se encontró id de estado: " + nombre + " (" + ambito + ")");
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error buscando id de estado", e);
+        }
+    }
+
 }

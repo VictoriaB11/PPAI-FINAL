@@ -91,4 +91,25 @@ public class MotivoTipoDAO {
             // Propaga el error con mensaje claro.
         }
     }
+
+    //PARA OBTENER LOS IDs
+    public int obtenerIdPorDescripcion(String descripcion) {
+        String sql = "SELECT id FROM motivo_tipo WHERE descripcion = ?";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, descripcion);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+            }
+
+            throw new RuntimeException("No se encontró id de motivo: " + descripcion);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error buscando id de motivo", e);
+        }
+    }
+
 }
