@@ -10,6 +10,10 @@ import org.example.Modelos.*;
 import org.example.Vistas.InterfazMonitor;
 import org.example.Vistas.InterfazEnvioMail;
 import org.example.Vistas.SeleccionOrdenDeInspeccion;
+import org.example.Persistencia.SismografoDAO;
+import org.example.Persistencia.CambioEstadoDAO;
+import org.example.Persistencia.EstadoDAO;
+import org.example.Persistencia.MotivoTipoDAO;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -33,6 +37,13 @@ public class GestorRI {
     private List<String> mailsResponsablesDeReparaciones = new ArrayList<>();
     private List<Empleado> empleados = new ArrayList<>();
     private final java.util.List<Window> ventanasAbiertas = new ArrayList<>(); // FinCU
+
+// PERSISTENCIA
+    private final SismografoDAO sismografoDAO = new SismografoDAO();
+    private final CambioEstadoDAO cambioEstadoDAO = new CambioEstadoDAO();
+    private final EstadoDAO estadoDAO = new EstadoDAO();
+    private final MotivoTipoDAO motivoTipoDAO = new MotivoTipoDAO();
+    private final Map<Sismografo, Integer> sismografoIdMap = new HashMap<>(); // Mapa para asociar cada objeto Sismografo (memoria) con su ID en la BD
 
 
 //PASO 1:
@@ -68,6 +79,17 @@ public class GestorRI {
 
         // Guarda el catálogo de Sismógrafos (se usará en pasos posteriores para cambiar estado, etc.).
         this.sismografosDisponibles = sismografos;
+
+        // PERSISTENCIA: asegurar que cada Sismografo tenga un ID en BD
+            // Para cada sismógrafo que existe en memoria, creamos un registro
+            // y guardamos la relación objeto->id en el mapa sismografoIdMap.
+        for (Sismografo s : this.sismografosDisponibles) {
+            if (!sismografoIdMap.containsKey(s)) {
+                int idBD = sismografoDAO.insertarSismografo();
+                sismografoIdMap.put(s, idBD);
+            }
+        }
+
     }
 
 //PASO 2:
@@ -123,7 +145,6 @@ public class GestorRI {
                 java.util.Comparator.comparing(OrdenDeInspeccion::getFechaHoraFinalizacion)
         );
     }
-
 // Fin PASO 2
 
     // Paso 3: RI informa al gestor la orden seleccionada
@@ -218,6 +239,9 @@ public class GestorRI {
 
         //cambiamos el estado del sismografo
         cambiarEstadoSismografo();
+
+        // Persistencia: el cambio de estado y sus motivos
+        persistirCambioEstadoEnBD();
 
         return true; // El cierre fue exitoso.
     }
@@ -389,4 +413,70 @@ public class GestorRI {
         this.situacionSismografoHabilitada = false;
         // (si hace falta) this.estadosDisponibles = null; this.motivosDisponibles = null;
     }
+
+   // PERSISTENCIA: guardar el CambioEstado real
+   private void persistirCambioEstadoEnBD() {
+       // 1) Obtener la estación asociada a la orden seleccionada
+       EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
+
+       // 2) Buscar el sismógrafo asociado a esa estación
+       Sismografo sismografo = buscarSismografoPorEstacion(estacion);
+       if (sismografo == null) {
+           throw new IllegalStateException("No se encontró sismógrafo para persistir el cambio");
+       }
+
+       // 3) Obtener o crear el ID del sismógrafo en la BD
+       Integer sismografoId = sismografoIdMap.get(sismografo);
+       if (sismografoId == null) {
+           int nuevoId = sismografoDAO.insertarSismografo();
+           sismografoIdMap.put(sismografo, nuevoId);
+           sismografoId = nuevoId;
+       }
+
+       // 4) Obtener el último CambioEstado (ya creado en memoria)
+       CambioEstado ultimoCambio = sismografo.getEstadoActual();
+       if (ultimoCambio == null) {
+           throw new IllegalStateException("El sismógrafo no tiene estado actual para persistir");
+       }
+
+       // 5) Obtener el estado del cambio (Fuera de Servicio)
+       Estado estadoFS = ultimoCambio.getEstado();
+
+       // 6) Obtener el ID del estado en la BD
+       int estadoId = estadoDAO.obtenerIdPorNombreYAmbito(
+               estadoFS.getNombre(),
+               estadoFS.getAmbito()
+       );
+
+       // 7) Obtener nombre del empleado responsable
+       Empleado emp = ultimoCambio.getEmpleadoResponsable();
+       String empleadoNombre = (emp != null)
+               ? emp.getNombre() + " " + emp.getApellido()
+               : null;
+
+       // 8) Insertar el cambio de estado en la BD
+       int cambioEstadoId = cambioEstadoDAO.insertarCambioEstado(
+               sismografoId,
+               estadoId,
+               ultimoCambio.getFechaHoraInicio(), // ✔ getter correcto
+               empleadoNombre
+       );
+
+       // 9) Insertar los motivos asociados al cambio
+       if (ultimoCambio.getMotivosFueraDeServicio() != null) {
+           for (MotivoFueraDeServicio mfs : ultimoCambio.getMotivosFueraDeServicio()) {
+               MotivoTipo tipo = mfs.getMotivoTipo(); // ✔ getter correcto
+               int motivoId = motivoTipoDAO.obtenerIdPorDescripcion(
+                       tipo.getDescripcion()
+               );
+
+               cambioEstadoDAO.insertarMotivoEnCambio(cambioEstadoId, motivoId);
+           }
+       }
+
+       // 10) Actualizar el estado actual del sismógrafo en la BD
+       sismografoDAO.actualizarEstadoActual(sismografoId, cambioEstadoId);
+   }
+
+
 }

@@ -2,9 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+<<<<<<< HEAD
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/PPAI_G6-01-09 - FINAL" isTestSource="false" />
     </content>
+=======
+    <content url="file://$MODULE_DIR$" />
+>>>>>>> a685dd86ba60a6be23fe65e574b59bf00556b8f4
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
