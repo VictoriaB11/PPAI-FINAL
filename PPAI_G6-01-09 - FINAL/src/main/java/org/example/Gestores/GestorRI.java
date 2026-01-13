@@ -307,13 +307,13 @@ public class GestorRI {
         }
     }
 
-    public Estado buscarEstadoFueraDeServicioParaSismografo() {
-        for (Estado estado : estadosDisponibles) {
-            if (estado.esAmbitoSismografo() && estado.esFueraDeServicio()) {
-                return estado;
-            }
-        }
-        return null;
+    //METODO DE ENGANCHE DEL PATRÓN STATE
+    public void buscarEstadoFueraDeServicioParaSismografo() {
+        sismografoSeleccionado.ponerEnReparacion(
+                this.fechaHoraActual,
+                this.motivosSeleccionados,
+                this.empleadoLogueado
+        );
     }
 
     public void cambiarEstadoSismografo() {
