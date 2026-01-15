@@ -307,13 +307,27 @@ public class GestorRI {
         }
     }
 
-    //METODO DE ENGANCHE DEL PATRÓN STATE
-    public void buscarEstadoFueraDeServicioParaSismografo() {
-        sismografoSeleccionado.ponerEnReparacion(
-                this.fechaHoraActual,
-                this.motivosSeleccionados,
-                this.empleadoLogueado
-        );
+//    //METODO DE ENGANCHE DEL PATRÓN STATE
+//    public void buscarEstadoFueraDeServicioParaSismografo() {
+//        sismografoSeleccionado.ponerEnReparacion(
+//                this.fechaHoraActual,
+//                this.motivosSeleccionados,
+//                this.empleadoLogueado
+//        );
+//    }
+
+// Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
+// Devuelve null si no se encuentra o si la lista de estados no está inicializada.
+    private Estado buscarEstadoFueraDeServicioParaSismografo() {
+        if (this.estadosDisponibles == null) return null;
+        for (Estado estado : this.estadosDisponibles) {
+            if (estado == null) continue;
+            // Se asume que Estado proporciona estos predicados según el diagrama/clases
+            if (estado.esAmbitoSismografo() && estado.esFueraDeServicio()) {
+                return estado;
+            }
+        }
+        return null;
     }
 
     public void cambiarEstadoSismografo() {
