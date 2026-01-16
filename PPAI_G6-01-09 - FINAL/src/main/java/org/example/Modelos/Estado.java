@@ -49,9 +49,8 @@ public abstract class Estado {
     /* Contratos que deben implementar los estados concretos */
     public abstract Estado crearProximoEstado();
 
-    public abstract CambioEstado crearCambioDeEstado(LocalDateTime fechaInicio,
-                                                     List<MotivoFueraDeServicio> motivos,
-                                                     Empleado responsable);
+    public abstract CambioEstado crearCambioEstado();
+
 
     /**
      * Implementación por defecto de ponerEnReparacion:
@@ -60,18 +59,9 @@ public abstract class Estado {
      *
      * Asume la existencia de la firma: Sismografo.setEstadoActual(CambioEstado)
      */
-    public void ponerEnReparacion(Sismografo sismografo,
+    public abstract void ponerEnReparacion(Sismografo sismografo,
                                   LocalDateTime fechaHoraInicio,
+                                  List<CambioEstado> cambiosEstado,
                                   List<MotivoFueraDeServicio> motivos,
-                                  Empleado responsable) {
-        if (sismografo == null || fechaHoraInicio == null) {
-            throw new IllegalArgumentException("Sismografo y fechaHoraInicio no pueden ser nulos");
-        }
-
-        CambioEstado nuevo = crearCambioDeEstado(fechaHoraInicio, motivos, responsable);
-        if (nuevo != null) {
-            // delegar en Sismografo el cierre del último cambio y el registro del nuevo
-            sismografo.setEstadoActual(nuevo);
-        }
-    }
+                                  Empleado RILogueado);
 }
