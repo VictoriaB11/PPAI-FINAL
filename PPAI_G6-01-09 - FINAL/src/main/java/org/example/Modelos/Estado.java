@@ -44,7 +44,6 @@ public abstract class Estado {
     public boolean esCerrada() { return false; }
     public boolean esCompletamenteRealizada() { return false; }
     public boolean esFueraDeServicio() { return false; }
-    public boolean esInhabilitadoPorInspeccion() { return false; }
 
     /* Contratos que deben implementar los estados concretos */
     public abstract Estado crearProximoEstado();

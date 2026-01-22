@@ -22,7 +22,7 @@ public class InhabilitadoPorInspeccion extends Estado {
                                   List<MotivoFueraDeServicio> motivos,
                                   Empleado RILogueado) {
 
-        // 1. Crear el nuevo cambio de estado (usando nuestro propio método factory)
+        // 1. Crear el nuevo cambio de estado (usando nuestro propio metodo factory)
         CambioEstado nuevoCambio = this.crearCambioEstado();
 
         // 2. Setear los datos que vienen por parámetro

@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map; // <-- necesario para el Map<MotivoTipo, String>
 
 public class Sismografo {
 
@@ -23,6 +22,62 @@ public class Sismografo {
         this.identificadorSismografo = identificadorSismografo;
         this.nroSerie = nroSerie;
         this.historialEstados = historialEstados;
+        this.estadoActual = buscarUltimoCambioEstado(); //ns si va
+    }
+
+    public void ponerEnReparacion(LocalDateTime fechaHoraActual,
+                                  List<MotivoFueraDeServicio> motivos,
+                                  Empleado RILogueado) {
+
+        // Validamos que tengamos un estado actual cargado
+        if (this.estadoActual != null && this.estadoActual.getEstado() != null) {
+
+            // DELEGACIÓN: El sismógrafo le dice a su estado "encárgate tú"
+            this.estadoActual.getEstado().ponerEnReparacion(
+                    this,               // Le pasamos el contexto (el sismógrafo mismo)
+                    fechaHoraActual,
+                    this.historialEstados, // Le pasamos el historial
+                    motivos,
+                    RILogueado
+            );
+        } else {
+            throw new IllegalStateException("El sismógrafo no tiene un estado actual válido para realizar la operación.");
+        }
+    }
+
+    public void agregarCambioEstado(CambioEstado cambio) {
+        if (this.historialEstados == null) {
+            this.historialEstados = new ArrayList<>();
+        }
+        this.historialEstados.add(cambio);
+
+    }
+
+    // Este metodo recibe CambioEstado porque en InhabilitadoPorInspeccion hacemos:
+    // sismografo.setEstadoActual(nuevoCambio);
+    public void setEstadoActual(Estado estado) {
+        this.estadoActual = estadoActual;
+    }
+
+    //Metodos getters y setters
+
+    public CambioEstado buscarUltimoCambioEstado() {
+        // Opción A: Iterar buscando el que es actual
+        if (historialEstados != null) {
+            for (CambioEstado cambio : historialEstados) {
+                if (cambio.esEstadoActual()) {
+                    return cambio;
+                }
+            }
+        }
+        // Opción B: Si mantenemos la variable 'estadoActual' siempre actualizada,
+        // simplemente retornamos esa variable.
+        return this.estadoActual;
+    }
+
+
+    public boolean esDeMiEstacion(EstacionSismologica estacion) {
+        return this.estacionSismologica != null && this.estacionSismologica.equals(estacion);
     }
 
     public EstacionSismologica getEstacionSismologica() {
@@ -39,6 +94,10 @@ public class Sismografo {
 
     public void setFechaAdquisicion(LocalDate fechaAdquisicion) {
         this.fechaAdquisicion = fechaAdquisicion;
+    }
+
+    public Integer getIdentificadorSismografo() {
+        return identificadorSismografo;
     }
 
     public void setIdentificadorSismografo(Integer identificadorSismografo) {
@@ -63,58 +122,5 @@ public class Sismografo {
 
     public CambioEstado getEstadoActual() {
         return estadoActual;
-    }
-
-
-    // PASO 2
-    public boolean esDeMiEstacion(EstacionSismologica estacion) {
-        return this.estacionSismologica != null && this.estacionSismologica.equals(estacion);
-    }
-
-    public Integer getIdentificadorSismografo() {
-        return identificadorSismografo;
-    }
-//FIN PASO 2
-
-    /**
-     * Pone el sismógrafo en reparación (Fuera de Servicio) creando el CambioEstado
-     * y construyendo los MotivoFueraDeServicio a partir del mapa MotivoTipo -> comentario.
-     */
-    public void ponerEnReparacion(Estado estadoFueraServicio,
-                                  Empleado responsable,
-                                  Map<MotivoTipo, String> motivosYComentarios) {
-        LocalDateTime fechaHoraActual = LocalDateTime.now();
-
-        // Finalizar el cambio de estado actual
-        CambioEstado cambioActual = this.buscarUltimoCambioEstado();
-        if (cambioActual != null && cambioActual.esEstadoActual()) {
-            cambioActual.setFechaHoraFin(fechaHoraActual);
-        }
-
-        // Crear nuevo cambio de estado
-        CambioEstado nuevoCambio = new CambioEstado();
-        nuevoCambio.setEstado(estadoFueraServicio);
-        nuevoCambio.setFechaHoraInicio(fechaHoraActual);
-        nuevoCambio.setEmpleadoResponsable(responsable);
-
-        // Construir motivos a partir del mapa (usa el metodo nuevo de CambioEstado)
-        nuevoCambio.crearMotivosFueraDeServicio(motivosYComentarios);
-
-        // Registrar en historial y actualizar estado actual
-        historialEstados.add(nuevoCambio);
-        this.setEstadoActual(nuevoCambio);
-    }
-
-    public CambioEstado buscarUltimoCambioEstado() {
-        for (CambioEstado cambio : historialEstados) {
-            if (cambio.esEstadoActual()) {
-                return cambio;
-            }
-        }
-        return null;
-    }
-
-    public void setEstadoActual(CambioEstado cambio) {
-        this.estadoActual = cambio;
     }
 }

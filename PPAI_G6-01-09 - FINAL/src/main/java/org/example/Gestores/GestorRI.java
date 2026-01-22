@@ -27,18 +27,21 @@ public class GestorRI {
     private List<OrdenDeInspeccion> ordenesDeInspeccion;
     private OrdenDeInspeccion ordenSeleccionada;
     private String observacionCierre;
-    private Map<MotivoTipo, String> motivosYComentarios;
+    private Map<MotivoTipo, String> motivosYComentarios; //ver si lo ponemos como lista
     private List<Estado> estadosDisponibles;
     private List<MotivoTipo> motivosDisponibles;
     private boolean situacionSismografoHabilitada = false;
     private List<Sismografo> sismografosDisponibles;
+
+
     private InterfazMonitor interfazMonitor;
     private InterfazEnvioMail interfazEnvioMail;
+
     private List<String> mailsResponsablesDeReparaciones = new ArrayList<>();
     private List<Empleado> empleados = new ArrayList<>();
     private final java.util.List<Window> ventanasAbiertas = new ArrayList<>(); // FinCU
 
-// PERSISTENCIA
+    // PERSISTENCIA
     private final SismografoDAO sismografoDAO = new SismografoDAO();
     private final CambioEstadoDAO cambioEstadoDAO = new CambioEstadoDAO();
     private final EstadoDAO estadoDAO = new EstadoDAO();
@@ -47,6 +50,7 @@ public class GestorRI {
 
 
 //PASO 1:
+
     /**
      * Constructor. Se usa para crear la instancia del gestor.
      * Se inicializan las colecciones internas para que no estén nulas.
@@ -65,6 +69,11 @@ public class GestorRI {
         // Catálogo de sismógrafos disponibles (inyectado por la Pantalla en Paso 1).
         // Se inicializa en vacío para no depender de null.
         this.sismografosDisponibles = new ArrayList<>();
+
+        // Inicialización dummy de interfaces para evitar NullPointer si no se inyectan
+        // (En un caso real, la Pantalla debería setearlas)
+        this.interfazMonitor = new InterfazMonitor();
+        this.interfazEnvioMail = new InterfazEnvioMail();
     }
 
     /**
@@ -81,8 +90,8 @@ public class GestorRI {
         this.sismografosDisponibles = sismografos;
 
         // PERSISTENCIA: asegurar que cada Sismografo tenga un ID en BD
-            // Para cada sismógrafo que existe en memoria, creamos un registro
-            // y guardamos la relación objeto->id en el mapa sismografoIdMap.
+        // Para cada sismógrafo que existe en memoria, creamos un registro
+        // y guardamos la relación objeto->id en el mapa sismografoIdMap.
         for (Sismografo s : this.sismografosDisponibles) {
             if (!sismografoIdMap.containsKey(s)) {
                 int idBD = sismografoDAO.insertarSismografo();
@@ -110,7 +119,7 @@ public class GestorRI {
      * Al finalizar, notifica a la Pantalla para que muestre las órdenes (Gestor -> Pantalla)
      */
     public List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas() {
-        //Obtiene al Empleado actual usando el método anterior.
+        //Obtiene al Empleado actual usando el metodo anterior.
         Empleado empleadoLogueado = buscarEmpleadoLogueado();
 
         //Prepara una lista resultado para ir acumulando solo las órdenes válidas.
@@ -141,8 +150,7 @@ public class GestorRI {
     private void ordenarOrdenesDeInspeccionRealizadas(List<OrdenDeInspeccion> ordenesFiltradas) {
         // Protección por si llega null
         if (ordenesFiltradas == null) return;
-        ordenesFiltradas.sort(
-                java.util.Comparator.comparing(OrdenDeInspeccion::getFechaHoraFinalizacion)
+        ordenesFiltradas.sort(Comparator.comparing(OrdenDeInspeccion::getFechaHoraFinalizacion)
         );
     }
 // Fin PASO 2
@@ -165,9 +173,11 @@ public class GestorRI {
     }
 
     //Paso 6: habilita la actualización de la situación del sismógrafo.
+
     /**
      * Este metodo verifica si hay una orden seleccionada. Si no la hay,
      * no se puede continuar con la actualización y devuelve false.
+     *
      * @return true si se habilita correctamente (hay orden seleccionada), false si no.
      */
     public boolean habilitarActualizarSituacionSismografo() {
@@ -182,8 +192,9 @@ public class GestorRI {
     }
 
     // Paso 6: devolver motivos disponibles
+
     /**
-     *Este metodo permite cargar dinámicamente la lista de motivos que serán
+     * Este metodo permite cargar dinámicamente la lista de motivos que serán
      * utilizados en la interfaz para selección y comentarios.
      */
     public void setMotivosDisponibles(List<MotivoTipo> motivosDisponibles) {
@@ -198,6 +209,7 @@ public class GestorRI {
 
 
     // Paso 7-a: registrar motivos seleccionados por el usuario.
+
     /**
      * Este metodo representa la interacción PantallaRI -> GestorRI : tomarSeleccionMotivosTipos()
      * Inicializa el mapa interno motivosYComentarios con los motivos seleccionados,
@@ -212,6 +224,7 @@ public class GestorRI {
     }
 
     // Paso 7-b: registrar comentarios asociados a los motivos.
+
     /**
      * Este metodo representa la interacción PantallaRI -> GestorRI : tomarIngresoComentarioMotivo()
      * Reemplaza el mapa interno motivosYComentarios con los comentarios completos
@@ -221,15 +234,15 @@ public class GestorRI {
         this.motivosYComentarios = motivosYComentarios;
     }
 
-    //Paso 9:
-    public boolean tomarConfirmacionParaCerrarOrdenDeInspeccion(List<Estado> todosLosEstados){
+    //Paso 9: confirmacion para cerrar orden de inspección
+    public boolean tomarConfirmacionParaCerrarOrdenDeInspeccion(List<Estado> todosLosEstados) {
         // Paso 10
         //  Se verifica que exista una observación de cierre y
         //  al menos un motivo válido para poner el sismógrafo fuera de servicio.
         if (!validarExistenciaObservaciones()) {
             return false; // Si no hay observación de cierre, no se puede cerrar la orden.
         }
-        if (!validarMotivosMinimos()){
+        if (!validarMotivosMinimos()) {
             return false; // Si no hay al menos un motivo con comentario, no se puede cerrar la orden.
         }
         // si pasa la validación cambiamos el estado de la orden
@@ -246,15 +259,6 @@ public class GestorRI {
         return true; // El cierre fue exitoso.
     }
 
-    public OrdenDeInspeccion getOrdenSeleccionada() {
-        return ordenSeleccionada;
-    }
-
-    public List<Estado> getEstadosDisponibles() {
-        return this.estadosDisponibles;
-    }
-
-
 // Paso 10: Sistema: valida que exista una observación de cierre de orden y
     // al menos un motivo seleccionado asociado a la puesta a Fuera de Servicio y es correcto.
 
@@ -264,7 +268,7 @@ public class GestorRI {
         return ordenSeleccionada != null
                 && ordenSeleccionada.getObservacionCierre() != null
                 && !ordenSeleccionada.getObservacionCierre().trim().isEmpty();
-                // se asegura que la observación no esté vacía ni compuesta por espacios en blanco.
+        // se asegura que la observación no esté vacía ni compuesta por espacios en blanco.
     }
 
     // El metodo validarMotivosMinimos() verifica que exista al menos un comentario y motivo válido.
@@ -307,59 +311,53 @@ public class GestorRI {
         }
     }
 
-//    //METODO DE ENGANCHE DEL PATRÓN STATE
-//    public void buscarEstadoFueraDeServicioParaSismografo() {
-//        sismografoSeleccionado.ponerEnReparacion(
-//                this.fechaHoraActual,
-//                this.motivosSeleccionados,
-//                this.empleadoLogueado
-//        );
-//    }
 
-// Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
+    // Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
 // Devuelve null si no se encuentra o si la lista de estados no está inicializada.
     private Estado buscarEstadoFueraDeServicioParaSismografo() {
         if (this.estadosDisponibles == null) return null;
         for (Estado estado : this.estadosDisponibles) {
-            if (estado == null) continue;
-            // Se asume que Estado proporciona estos predicados según el diagrama/clases
-            if (estado.esAmbitoSismografo() && estado.esFueraDeServicio()) {
+            if (estado != null && estado.esAmbitoSismografo() && estado.esFueraDeServicio()) {
                 return estado;
             }
         }
         return null;
     }
 
-    public void cambiarEstadoSismografo() {
-        // Buscar el estado 'Fuera de Servicio'
-        Estado estadoFS = buscarEstadoFueraDeServicioParaSismografo();
-
-        if (estadoFS == null) {
-            throw new IllegalStateException("No se encontró el estado 'Fuera de Servicio'");
-        }
-
-        // Obtener el empleado responsable
-        Empleado responsable = buscarEmpleadoLogueado();
-
-        // Buscar el sismógrafo asociado a la estación seleccionada
-        EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
-        Sismografo sismografo = buscarSismografoPorEstacion(estacion);
-
-        if (sismografo == null) {
-            throw new IllegalStateException("No se encontró el sismógrafo para la estación: " + estacion.getNombre());
-        }
-
-        // Poner el sismógrafo en reparación (usa el Map<MotivoTipo, String> directamente)
-        sismografo.ponerEnReparacion(estadoFS, responsable, this.motivosYComentarios);
-    }
-
     public Sismografo buscarSismografoPorEstacion(EstacionSismologica estacion) {
         for (Sismografo sismografo : sismografosDisponibles) {
-            if (sismografo.getEstacionSismologica().equals(estacion)) {
+            if (sismografo.esDeMiEstacion(estacion)) { // Usamos el método delegado que creamos en Sismografo
                 return sismografo;
             }
         }
-        return null; // Si no se encontró ninguno
+        return null;
+    }
+
+    public void cambiarEstadoSismografo() {
+        // 1 Obtener datos necesarios
+        Empleado RILogueado = buscarEmpleadoLogueado();
+        LocalDateTime fechaHoraActual = tomarFechaHoraActual();
+
+        // 2 Buscar el sismografo
+        EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
+        Sismografo sismografo = buscarSismografoPorEstacion(estacion);
+        if (sismografo == null) {
+            throw new IllegalStateException("No se encontró el sismógrafo para la estación: " + estacion.getNombre());
+        }
+        // 3. Convertir Map<MotivoTipo, String> a List<MotivoFueraDeServicio
+        // Esto es necesario porque Sismografo.ponerEnReparacion espera una Lista.
+        List<MotivoFueraDeServicio> listaMotivos = new ArrayList<>();
+        if (this.motivosYComentarios != null) {
+            for (Map.Entry<MotivoTipo, String> entry : this.motivosYComentarios.entrySet()) {
+                // Creamos el objeto MotivoFueraDeServicio con (comentario, tipo)
+                listaMotivos.add(new MotivoFueraDeServicio(entry.getValue(), entry.getKey()));
+            }
+        }
+
+        // 4 Llamar al sismografo (Delegacion)
+        // NOTA: Ya no pasamos 'estadoFS' porque el estado actual (InhabilitadoPorInspeccion)
+        // sabe que el siguiente es FueraDeServicio.
+        sismografo.ponerEnReparacion(fechaHoraActual, listaMotivos, RILogueado);
     }
 
     //Paso 13: Buscar los mails de los responsables
@@ -398,24 +396,32 @@ public class GestorRI {
     }
 
     // Fin Cu
-    /** Registrar una ventana creada durante el CU */
+
+    /**
+     * Registrar una ventana creada durante el CU
+     */
     public void registrarVentana(Window w) {
         if (w != null) ventanasAbiertas.add(w);
     }
 
-    /** (Opcional) eliminar si cerrás manualmente una ventana */
+    /**
+     * (Opcional) eliminar si cerrás manualmente una ventana
+     */
     public void eliminarVentana(Window w) {
         ventanasAbiertas.remove(w);
     }
 
-    /** Fin del Caso de Uso: cierra pantallas y limpia estado */
+    /**
+     * Fin del Caso de Uso: cierra pantallas y limpia estado
+     */
     public void finCU() {
         // Cerrar ventanas en el EDT
         SwingUtilities.invokeLater(() -> {
             for (Window w : new ArrayList<>(ventanasAbiertas)) {
                 try {
                     if (w.isDisplayable()) w.dispose();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
             ventanasAbiertas.clear();
         });
@@ -428,69 +434,83 @@ public class GestorRI {
         // (si hace falta) this.estadosDisponibles = null; this.motivosDisponibles = null;
     }
 
-   // PERSISTENCIA: guardar el CambioEstado real
-   private void persistirCambioEstadoEnBD() {
-       // 1) Obtener la estación asociada a la orden seleccionada
-       EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
+    // Getters auxiliares
+    public OrdenDeInspeccion getOrdenSeleccionada() {
+        return ordenSeleccionada;
+    }
 
-       // 2) Buscar el sismógrafo asociado a esa estación
-       Sismografo sismografo = buscarSismografoPorEstacion(estacion);
-       if (sismografo == null) {
-           throw new IllegalStateException("No se encontró sismógrafo para persistir el cambio");
-       }
+    public List<Estado> getEstadosDisponibles() {
+        return this.estadosDisponibles;
+    }
 
-       // 3) Obtener o crear el ID del sismógrafo en la BD
-       Integer sismografoId = sismografoIdMap.get(sismografo);
-       if (sismografoId == null) {
-           int nuevoId = sismografoDAO.insertarSismografo();
-           sismografoIdMap.put(sismografo, nuevoId);
-           sismografoId = nuevoId;
-       }
 
-       // 4) Obtener el último CambioEstado (ya creado en memoria)
-       CambioEstado ultimoCambio = sismografo.getEstadoActual();
-       if (ultimoCambio == null) {
-           throw new IllegalStateException("El sismógrafo no tiene estado actual para persistir");
-       }
+    // PERSISTENCIA: guardar el CambioEstado real
+    private void persistirCambioEstadoEnBD() {
+        // 1) Obtener la estación asociada a la orden seleccionada
+        EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
 
-       // 5) Obtener el estado del cambio (Fuera de Servicio)
-       Estado estadoFS = ultimoCambio.getEstado();
+        // 2) Buscar el sismógrafo asociado a esa estación
+        Sismografo sismografo = buscarSismografoPorEstacion(estacion);
+        if (sismografo == null) {
+            throw new IllegalStateException("No se encontró sismógrafo para persistir el cambio");
+        }
 
-       // 6) Obtener el ID del estado en la BD
-       int estadoId = estadoDAO.obtenerIdPorNombreYAmbito(
-               estadoFS.getNombre(),
-               estadoFS.getAmbito()
-       );
+        // 3) Obtener o crear el ID del sismógrafo en la BD
+        Integer sismografoId = sismografoIdMap.get(sismografo);
+        if (sismografoId == null) {
+            int nuevoId = sismografoDAO.insertarSismografo();
+            sismografoIdMap.put(sismografo, nuevoId);
+            sismografoId = nuevoId;
+        }
 
-       // 7) Obtener nombre del empleado responsable
-       Empleado emp = ultimoCambio.getEmpleadoResponsable();
-       String empleadoNombre = (emp != null)
-               ? emp.getNombre() + " " + emp.getApellido()
-               : null;
+        // 4) Obtener el último CambioEstado (ya creado en memoria)
+        CambioEstado ultimoCambio = sismografo.getEstadoActual();
+        if (ultimoCambio == null) {
+            throw new IllegalStateException("El sismógrafo no tiene estado actual para persistir");
+        }
 
-       // 8) Insertar el cambio de estado en la BD
-       int cambioEstadoId = cambioEstadoDAO.insertarCambioEstado(
-               sismografoId,
-               estadoId,
-               ultimoCambio.getFechaHoraInicio(), // ✔ getter correcto
-               empleadoNombre
-       );
+        // 5) Obtener el estado del cambio (Fuera de Servicio)
+        Estado estadoFS = ultimoCambio.getEstado();
 
-       // 9) Insertar los motivos asociados al cambio
-       if (ultimoCambio.getMotivosFueraDeServicio() != null) {
-           for (MotivoFueraDeServicio mfs : ultimoCambio.getMotivosFueraDeServicio()) {
-               MotivoTipo tipo = mfs.getMotivoTipo(); // ✔ getter correcto
-               int motivoId = motivoTipoDAO.obtenerIdPorDescripcion(
-                       tipo.getDescripcion()
-               );
+        // 6) Obtener el ID del estado en la BD
+        int estadoId = estadoDAO.obtenerIdPorNombreYAmbito(
+                estadoFS.getNombre(),
+                estadoFS.getAmbito()
+        );
 
-               cambioEstadoDAO.insertarMotivoEnCambio(cambioEstadoId, motivoId);
-           }
-       }
+        // 7) Obtener nombre del empleado responsable logueado
+        Empleado emp = ultimoCambio.getEmpleado();
+        String nombreRILogueado = (emp != null)
+                ? emp.getNombre() + " " + emp.getApellido()
+                : null;
 
-       // 10) Actualizar el estado actual del sismógrafo en la BD
-       sismografoDAO.actualizarEstadoActual(sismografoId, cambioEstadoId);
-   }
+        // 8) Insertar el cambio de estado en la BD
+        int cambioEstadoId = cambioEstadoDAO.insertarCambioEstado(
+                sismografoId,
+                estadoId,
+                ultimoCambio.getFechaHoraInicio(), // ✔ getter correcto
+                nombreRILogueado
+        );
 
+        // 9) Insertar los motivos asociados al cambio
+        if (ultimoCambio.getMotivosFueraDeServicio() != null) {
+            for (MotivoFueraDeServicio mfs : ultimoCambio.getMotivosFueraDeServicio()) {
+                MotivoTipo tipo = mfs.getMotivoTipo(); // ✔ getter correcto
+                int motivoId = motivoTipoDAO.obtenerIdPorDescripcion(
+                        tipo.getDescripcion()
+                );
+
+                cambioEstadoDAO.insertarMotivoEnCambio(cambioEstadoId, motivoId);
+            }
+        }
+
+        // 10) Actualizar el estado actual del sismógrafo en la BD
+        sismografoDAO.actualizarEstadoActual(sismografoId, cambioEstadoId);
+    }
 
 }
+
+
+
+
+

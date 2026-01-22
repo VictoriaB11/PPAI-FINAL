@@ -1,4 +1,5 @@
 package org.example.Modelos;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -8,19 +9,23 @@ public class CambioEstado {
 
     private LocalDateTime fechaHoraInicio;
     private LocalDateTime fechaHoraFin;
-    private List<MotivoFueraDeServicio> motivosFueraDeServicio;;
-    private Empleado empleadoResponsable;
+    private List<MotivoFueraDeServicio> motivosFueraDeServicio;
+    private Empleado RILogueado;
     private Estado estado;
 
     public CambioEstado() {
     }
 
-    public CambioEstado(Estado estado, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado empleadoResponsable) {
+    public CambioEstado(Estado estado, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
         this.estado = estado;
         this.fechaHoraInicio = fechaHoraInicio;
         this.fechaHoraFin = fechaHoraFin;
         this.motivosFueraDeServicio = motivosFueraDeServicio;
-        this.empleadoResponsable = empleadoResponsable;
+        this.RILogueado = RILogueado;
+    }
+
+    public CambioEstado(Estado estado, LocalDateTime fechaHoraInicio, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
+        this(estado, fechaHoraInicio, null, motivosFueraDeServicio, RILogueado);
     }
 
 
@@ -28,12 +33,28 @@ public class CambioEstado {
         return fechaHoraInicio;
     }
 
+    public boolean esEstadoActual() {
+
+        return fechaHoraFin == null;
+    }
+
+    public void setFechaHoraFin(LocalDateTime fechaHoraFin) {
+
+        this.fechaHoraFin = fechaHoraFin;
+    }
+
+    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
+
+        this.fechaHoraInicio = fechaHoraInicio;
+    }
 
     public LocalDateTime getFechaHoraFin() {
+
         return fechaHoraFin;
     }
 
     public List<MotivoFueraDeServicio> getMotivosFueraDeServicio() {
+
         return motivosFueraDeServicio;
     }
 
@@ -41,33 +62,23 @@ public class CambioEstado {
         this.motivosFueraDeServicio = motivosFueraDeServicio;
     }
 
-    public Empleado getEmpleadoResponsable() {
-        return empleadoResponsable;
+    public void setEmpleadoResponsable(Empleado RILogueado) {
+        this.RILogueado = RILogueado;
     }
 
-    public Estado getEstado() {
-        return estado;
-    }
+    public Empleado getEmpleado() {
 
-    public boolean esEstadoActual() {
-        return fechaHoraFin == null;
-    }
-
-    public void setFechaHoraFin(LocalDateTime fechaHoraFin) {
-        this.fechaHoraFin = fechaHoraFin;
+        return RILogueado;
     }
 
     public void setEstado(Estado estado) {
         this.estado = estado;
     }
 
-    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
-        this.fechaHoraInicio = fechaHoraInicio;
+    public Estado getEstado() {
+        return estado;
     }
 
-    public void setEmpleadoResponsable(Empleado empleadoResponsable) {
-        this.empleadoResponsable = empleadoResponsable;
-    }
 
     public void crearMotivosFueraDeServicio(Map<MotivoTipo, String> motivosYComentarios) {
         List<MotivoFueraDeServicio> lista = new ArrayList<>();
