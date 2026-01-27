@@ -73,5 +73,5 @@ public class Empleado {
 
     public String obtenerMail() {
         return mail;
-    } // Paso 13: Nos devuelve el meil del empleado
+    } // Paso 13: Nos devuelve el mail del empleado
 }

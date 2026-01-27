@@ -120,7 +120,7 @@ public class GestorRI {
      */
     public List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas() {
         //Obtiene al Empleado actual usando el metodo anterior.
-        Empleado empleadoLogueado = buscarEmpleadoLogueado();
+        Empleado RILogueado = buscarEmpleadoLogueado();
 
         //Prepara una lista resultado para ir acumulando solo las órdenes válidas.
         List<OrdenDeInspeccion> ordenesFiltradas = new ArrayList<>();
@@ -130,7 +130,7 @@ public class GestorRI {
             // ...y se queda solo con las que:
             //    a) Son del empleado logueado (orden.esEmpleado(empleadoLogueado))
             //    b) Tienen estado "Completamente Realizada" (orden.esCompletamenteRealizada())
-            if (orden.esEmpleado(empleadoLogueado) && orden.esCompletamenteRealizada()) {
+            if (orden.esEmpleado(RILogueado) && orden.esCompletamenteRealizada()) {
                 // Si cumple ambas condiciones, se agrega a la lista resultado.
                 // (Los datos puntuales para mostrar se pedirán más tarde con getDatos())
                 ordenesFiltradas.add(orden);
@@ -311,7 +311,7 @@ public class GestorRI {
         }
     }
 
-
+    //Método 1 y de enganche del patrón
     // Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
 // Devuelve null si no se encuentra o si la lista de estados no está inicializada.
     private Estado buscarEstadoFueraDeServicioParaSismografo() {

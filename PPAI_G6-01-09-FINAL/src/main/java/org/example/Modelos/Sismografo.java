@@ -25,6 +25,7 @@ public class Sismografo {
         this.ultimoCambioEstado = buscarUltimoCambioEstado(); //ns si va
     }
 
+    // Metodo 2 del patrón
     public void ponerEnReparacion(LocalDateTime fechaHoraActual,
                                   List<MotivoFueraDeServicio> motivos,
                                   Empleado RILogueado) {
@@ -45,6 +46,7 @@ public class Sismografo {
         }
     }
 
+    //Metodo 13 del patron (recordar que falta el 12, el new)
     public void agregarCambioEstado(CambioEstado cambio) {
         if (this.historialEstados == null) {
             this.historialEstados = new ArrayList<>();
@@ -53,6 +55,7 @@ public class Sismografo {
 
     }
 
+    //Metodo 14 del patron
     // Este metodo recibe CambioEstado porque en InhabilitadoPorInspeccion hacemos:
     // sismografo.setEstadoActual(nuevoCambio);
     public void setEstadoActual(CambioEstado ultimoCambioEstado) {

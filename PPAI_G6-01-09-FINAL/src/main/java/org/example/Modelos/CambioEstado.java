@@ -33,11 +33,13 @@ public class CambioEstado {
         return fechaHoraInicio;
     }
 
+    //Metodo 5 del patron
     public boolean esEstadoActual() {
 
         return fechaHoraFin == null;
     }
 
+    //Metodo 6 del patron
     public void setFechaHoraFin(LocalDateTime fechaHoraFin) {
 
         this.fechaHoraFin = fechaHoraFin;
@@ -80,6 +82,7 @@ public class CambioEstado {
     }
 
 
+    //Metodo 11 del patron
     public void crearMotivosFueraDeServicio(List<MotivoFueraDeServicio> motivos) {
         this.motivosFueraDeServicio = motivos;
     }
