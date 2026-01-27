@@ -55,8 +55,8 @@ public class Sismografo {
 
     // Este metodo recibe CambioEstado porque en InhabilitadoPorInspeccion hacemos:
     // sismografo.setEstadoActual(nuevoCambio);
-    public void setEstadoActual(Estado estado) {
-        this.estadoActual = estadoActual;
+    public void setEstadoActual(CambioEstado cambioEstado) {
+        this.estadoActual = cambioEstado;
     }
 
     //Metodos getters y setters

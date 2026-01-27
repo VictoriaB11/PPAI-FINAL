@@ -338,6 +338,12 @@ public class GestorRI {
         Empleado RILogueado = buscarEmpleadoLogueado();
         LocalDateTime fechaHoraActual = tomarFechaHoraActual();
 
+        // 1.1 Buscar el estado "Fuera de Servicio" para sismógrafo (método de enganche del patrón State)
+        Estado estadoFueraDeServicio = buscarEstadoFueraDeServicioParaSismografo();
+        if (estadoFueraDeServicio == null) {
+            throw new IllegalStateException("No se encontró el estado 'Fuera de Servicio' para sismógrafo");
+        }
+
         // 2 Buscar el sismografo
         EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
         Sismografo sismografo = buscarSismografoPorEstacion(estacion);
@@ -355,8 +361,8 @@ public class GestorRI {
         }
 
         // 4 Llamar al sismografo (Delegacion)
-        // NOTA: Ya no pasamos 'estadoFS' porque el estado actual (InhabilitadoPorInspeccion)
-        // sabe que el siguiente es FueraDeServicio.
+        // Nota: Aunque encontramos el estado FS mediante el hook, el patrón State
+        // internamente ya sabe qué estado crear. Esto valida que el estado exista en el catálogo.
         sismografo.ponerEnReparacion(fechaHoraActual, listaMotivos, RILogueado);
     }
 
