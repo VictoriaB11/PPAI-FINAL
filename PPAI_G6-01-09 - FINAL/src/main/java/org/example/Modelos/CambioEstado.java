@@ -80,18 +80,9 @@ public class CambioEstado {
     }
 
 
-    public void crearMotivosFueraDeServicio(Map<MotivoTipo, String> motivosYComentarios) {
-        List<MotivoFueraDeServicio> lista = new ArrayList<>();
-        if (motivosYComentarios != null) {
-            for (Map.Entry<MotivoTipo, String> entry : motivosYComentarios.entrySet()) {
-                MotivoTipo tipo = entry.getKey();
-                String comentario = entry.getValue();
-                lista.add(new MotivoFueraDeServicio(comentario, tipo));
-            }
-        }
-        this.motivosFueraDeServicio = lista;
+    public void crearMotivosFueraDeServicio(List<MotivoFueraDeServicio> motivos) {
+        this.motivosFueraDeServicio = motivos;
     }
-
 }
 
 

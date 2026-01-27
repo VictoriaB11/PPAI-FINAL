@@ -11,7 +11,7 @@ public class Sismografo {
     private Integer identificadorSismografo;
     private Integer nroSerie;
     private List<CambioEstado> historialEstados = new ArrayList<>();
-    private CambioEstado estadoActual;
+    private CambioEstado ultimoCambioEstado;
     private EstacionSismologica estacionSismologica;
 
     public Sismografo() {
@@ -22,7 +22,7 @@ public class Sismografo {
         this.identificadorSismografo = identificadorSismografo;
         this.nroSerie = nroSerie;
         this.historialEstados = historialEstados;
-        this.estadoActual = buscarUltimoCambioEstado(); //ns si va
+        this.ultimoCambioEstado = buscarUltimoCambioEstado(); //ns si va
     }
 
     public void ponerEnReparacion(LocalDateTime fechaHoraActual,
@@ -30,10 +30,10 @@ public class Sismografo {
                                   Empleado RILogueado) {
 
         // Validamos que tengamos un estado actual cargado
-        if (this.estadoActual != null && this.estadoActual.getEstado() != null) {
+        if (this.ultimoCambioEstado != null && this.ultimoCambioEstado.getEstado() != null) {
 
             // DELEGACIÓN: El sismógrafo le dice a su estado "encárgate tú"
-            this.estadoActual.getEstado().ponerEnReparacion(
+            this.ultimoCambioEstado.getEstado().ponerEnReparacion(
                     this,               // Le pasamos el contexto (el sismógrafo mismo)
                     fechaHoraActual,
                     this.historialEstados, // Le pasamos el historial
@@ -55,8 +55,8 @@ public class Sismografo {
 
     // Este metodo recibe CambioEstado porque en InhabilitadoPorInspeccion hacemos:
     // sismografo.setEstadoActual(nuevoCambio);
-    public void setEstadoActual(Estado estado) {
-        this.estadoActual = estadoActual;
+    public void setEstadoActual(CambioEstado ultimoCambioEstado) {
+        this.ultimoCambioEstado = ultimoCambioEstado;
     }
 
     //Metodos getters y setters
@@ -72,7 +72,7 @@ public class Sismografo {
         }
         // Opción B: Si mantenemos la variable 'estadoActual' siempre actualizada,
         // simplemente retornamos esa variable.
-        return this.estadoActual;
+        return this.ultimoCambioEstado;
     }
 
 
@@ -121,6 +121,6 @@ public class Sismografo {
     }
 
     public CambioEstado getEstadoActual() {
-        return estadoActual;
+        return ultimoCambioEstado;
     }
 }

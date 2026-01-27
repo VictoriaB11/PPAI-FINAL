@@ -18,36 +18,63 @@ public class InhabilitadoPorInspeccion extends Estado {
     @Override
     public void ponerEnReparacion(Sismografo sismografo,
                                   LocalDateTime fechaHoraActual,
-                                  List<CambioEstado> cambioEstado,
+                                  List<CambioEstado> historialCambioEstado,
                                   List<MotivoFueraDeServicio> motivos,
                                   Empleado RILogueado) {
 
-        // 1. Crear el nuevo cambio de estado (usando nuestro propio metodo factory)
-        CambioEstado nuevoCambio = this.crearCambioEstado();
+        // -------------------------------------------------------
+        // PASO A: Buscar el cambio de estado actual (SELF)
+        // Diagrama: InhabilitadoPorInspeccion -> buscarCambioDeEstadoActual()
+        // -------------------------------------------------------
+        CambioEstado ultimoCambio = this.buscarCambioDeEstadoActual(historialCambioEstado);
 
-        // 2. Setear los datos que vienen por parámetro
-        nuevoCambio.setFechaHoraInicio(fechaHoraActual);
-        nuevoCambio.setMotivosFueraDeServicio(motivos);
-        nuevoCambio.setEmpleadoResponsable(RILogueado);
-
-        // 3. Cerrar el estado anterior (el actual del sismógrafo)
-        CambioEstado estadoActual = sismografo.getEstadoActual();
-        if (estadoActual != null) {
-            estadoActual.setFechaHoraFin(fechaHoraActual);
+        // -------------------------------------------------------
+        // PASO B: Cerrar el estado anterior
+        // Diagrama: ultimo:CambioEstado -> setFechaHoraFin(...)
+        // -------------------------------------------------------
+        if (ultimoCambio != null) {
+            ultimoCambio.setFechaHoraFin(fechaHoraActual);
         }
 
-        // 4. Registrar el nuevo cambio en el historial y actualizar el actual
+        // -------------------------------------------------------
+        // PASO C: Crear el próximo estado (SELF)
+        // Diagrama: InhabilitadoPorInspeccion -> crearProximoEstado()
+        // -------------------------------------------------------
+        Estado proximoEstado = this.crearProximoEstado();
+
+        // -------------------------------------------------------
+        // PASO D: Crear el nuevo CambioEstado (new)
+        // -------------------------------------------------------
+        // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
+        CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstado, fechaHoraActual, motivos, RILogueado);
+        nuevoCambio.crearMotivosFueraDeServicio(motivos);
+
+        // -------------------------------------------------------
+        // PASO E: Actualizar Sismógrafo
+        // -------------------------------------------------------
         if (sismografo.getHistorialEstados() != null) {
             sismografo.getHistorialEstados().add(nuevoCambio);
         }
+        sismografo.agregarCambioEstado(nuevoCambio);
         sismografo.setEstadoActual(nuevoCambio);
-
     }
 
-    // buscarCambioDeEstadoActual(): devuelve el estado actual (aquí la misma instancia)
-    public Estado buscarCambioDeEstadoActual() {
-        return this;
+    // -------------------------------------------------------------------------
+    // IMPLEMENTACIÓN DEL SELF: buscarCambioDeEstadoActual
+    // Recorre la lista y manda el mensaje esEstadoActual() a cada elemento.
+    // -------------------------------------------------------------------------
+    public CambioEstado buscarCambioDeEstadoActual(List<CambioEstado> historialCambioEstado) {
+        if (historialCambioEstado != null) {
+            for (CambioEstado cambio : historialCambioEstado) {
+                // Mensaje al CambioEstado: esEstadoActual()
+                if (cambio.esEstadoActual()) {
+                    return cambio;
+                }
+            }
+        }
+        return null;
     }
+
 
     // crearProximoEstado(): según diagrama -> FueraDeServicio
     @Override
@@ -55,12 +82,12 @@ public class InhabilitadoPorInspeccion extends Estado {
         return new FueraDeServicio();
     }
 
-    // crearCambioDeEstado(...) requerido por la clase base Estado
-    @Override
-    public CambioEstado crearCambioEstado() {
-        CambioEstado nuevoCambio = new CambioEstado();
-        nuevoCambio.setEstado(crearProximoEstado());
-        return nuevoCambio;
-    }
+   @Override
+   public CambioEstado crearCambioEstado(Estado proximoEstado,
+                                          LocalDateTime fechaHoraInicio,
+                                          List<MotivoFueraDeServicio> motivos,
+                                          Empleado RILogueado) {
+        // Aquí se realiza el 'new' encapsulado
+        return new CambioEstado(proximoEstado, fechaHoraInicio, motivos, RILogueado);}
 
 }

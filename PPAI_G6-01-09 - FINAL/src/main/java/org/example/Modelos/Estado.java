@@ -48,7 +48,10 @@ public abstract class Estado {
     /* Contratos que deben implementar los estados concretos */
     public abstract Estado crearProximoEstado();
 
-    public abstract CambioEstado crearCambioEstado();
+    public abstract CambioEstado crearCambioEstado(Estado proximoEstado,
+                                                   LocalDateTime fechaHoraInicio,
+                                                   List<MotivoFueraDeServicio> motivos,
+                                                   Empleado RILogueado);
 
 
     /**

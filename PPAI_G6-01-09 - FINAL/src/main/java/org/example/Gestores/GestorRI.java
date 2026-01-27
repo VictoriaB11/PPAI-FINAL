@@ -354,11 +354,22 @@ public class GestorRI {
             }
         }
 
-        // 4 Llamar al sismografo (Delegacion)
-        // NOTA: Ya no pasamos 'estadoFS' porque el estado actual (InhabilitadoPorInspeccion)
-        // sabe que el siguiente es FueraDeServicio.
+        // 4. EL ENGANCHE (Self-Call):
+        // Ejecutamos el metodo porque el diagrama lo exige.
+        // Esto valida que el estado exista en la lista de estados disponibles del sistema.
+        Estado estadoFS = buscarEstadoFueraDeServicioParaSismografo();
+
+        if (estadoFS == null) {
+            throw new IllegalStateException("Error de consistencia: No se encuentra el estado 'Fuera de Servicio' en el sistema.");
+        }
+
+        // 5. Llamar al sismógrafo
+        // NOTA: NO le pasamos 'estadoFS' porque la firma del diagrama no lo incluye.
+        // El sismógrafo delegará a su estado actual, y ese estado hará 'new FueraDeServicio()'.
         sismografo.ponerEnReparacion(fechaHoraActual, listaMotivos, RILogueado);
     }
+
+
 
     //Paso 13: Buscar los mails de los responsables
     public void buscarMailsResponsablesDeReparaciones() {

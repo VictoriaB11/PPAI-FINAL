@@ -9,8 +9,12 @@ public class FueraDeServicio extends Estado {
         super("FueraDeServicio", "El sismografo está fuera de servicio", "Sismografo");
     }
 
+
     @Override
-    public CambioEstado crearCambioEstado() {
+    public CambioEstado crearCambioEstado(Estado proximoEstado,
+                                          LocalDateTime fechaHoraInicio,
+                                          List<MotivoFueraDeServicio> motivos,
+                                          Empleado RILogueado) {
         CambioEstado nuevoCambio = new CambioEstado();
         nuevoCambio.setEstado(crearProximoEstado());
         return nuevoCambio;
@@ -21,16 +25,16 @@ public class FueraDeServicio extends Estado {
         return true;
     }
 
+
+    // Estos metodos fueron implementados por una regla de java llamada Contrato de Clases Abstractas.
+    // todas las clases hijas están obligadas a tener ese metodo escrito en su código.
     @Override
     public Estado crearProximoEstado() {
-        throw new UnsupportedOperationException(
-                "No se puede cambiar automáticamente desde FueraDeServicio"
+        throw new RuntimeException(
+                "El estado FueraDeServicio no tiene un próximo estado automático."
         );
     }
 
-    // aquí debes implementarlo (probablemente lanzando error o no haciendo nada).
-    // Este metodo fue implementado por una regla de java llamada Contrato de Clases Abstractas.
-    // todas las clases hijas están obligadas a tener ese metodo escrito en su código.
 
     @Override
     public void ponerEnReparacion(Sismografo sismografo,
