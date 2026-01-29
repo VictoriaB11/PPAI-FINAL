@@ -25,13 +25,8 @@ public class OrdenDeInspeccion {
     @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
 
-    /**
-     * Estado actual de la orden.
-     * OJO: si creás estados "new" y no los persistís antes, te va a tirar transient.
-     * Por eso pongo cascade PERSIST: si el estado es nuevo, lo inserta.
-     */
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "estado_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "id_estado_orden") // FK a la tabla estado_orden
     private Estado estado;
 
     /**
@@ -45,7 +40,7 @@ public class OrdenDeInspeccion {
     public OrdenDeInspeccion() {
     }
 
-    public OrdenDeInspeccion(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraCierre, LocalDateTime fechaHoraFinalizacion, Integer numeroDeOrden, String observacionCierre, Empleado empleado, Estado estado, EstacionSismologica estacionSismologica) {
+    public OrdenDeInspeccion(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraCierre, LocalDateTime fechaHoraFinalizacion, Integer numeroDeOrden, String observacionCierre, Empleado empleado, EstadoSismografo estadoSismografo, EstacionSismologica estacionSismologica) {
         this.fechaHoraCierre = fechaHoraCierre;
         this.fechaFinalizacion = fechaHoraFinalizacion;
         this.numeroDeOrden = numeroDeOrden;

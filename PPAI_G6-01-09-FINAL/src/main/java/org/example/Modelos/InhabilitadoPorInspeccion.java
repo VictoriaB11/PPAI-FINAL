@@ -11,8 +11,8 @@ import jakarta.persistence.*;
  * crearProximoEstado, crearCambioDeEstado.
  */
 @Entity
-@DiscriminatorValue("INHABILITADO_POR_INSPECCION")
-public class InhabilitadoPorInspeccion extends Estado {
+@DiscriminatorValue("InhabilitadaPorInspeccion")
+public class InhabilitadoPorInspeccion extends EstadoSismografo {
 
     public InhabilitadoPorInspeccion() {
         super("InhabilitadoPorInspeccion", "Inhabilitado por inspección", "Sismografo");
@@ -44,13 +44,13 @@ public class InhabilitadoPorInspeccion extends Estado {
         // PASO C: Crear el próximo estado (SELF)
         // Diagrama: InhabilitadoPorInspeccion -> crearProximoEstado()
         // -------------------------------------------------------
-        Estado proximoEstado = this.crearProximoEstado();
+        EstadoSismografo proximoEstadoSismografo = this.crearProximoEstado();
 
         // -------------------------------------------------------
         // PASO D: Crear el nuevo CambioEstado (new)
         // -------------------------------------------------------
         // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
-        CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstado, fechaHoraActual, motivos, RILogueado);
+        CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstadoSismografo, fechaHoraActual, motivos, RILogueado);
         nuevoCambio.crearMotivosFueraDeServicio(motivos);
 
         // -------------------------------------------------------
@@ -85,19 +85,19 @@ public class InhabilitadoPorInspeccion extends Estado {
     //Metodo 7 del patron
     // crearProximoEstado(): según diagrama -> FueraDeServicio
     @Override
-    public Estado crearProximoEstado() {
+    public EstadoSismografo crearProximoEstado() {
         //Metodo 8 del patron
         return new FueraDeServicio();
     }
 
     // Metodo 9 del patron
    @Override
-   public CambioEstado crearCambioEstado(Estado proximoEstado,
-                                          LocalDateTime fechaHoraInicio,
-                                          List<MotivoFueraDeServicio> motivos,
-                                          Empleado RILogueado) {
+   public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
+                                         LocalDateTime fechaHoraInicio,
+                                         List<MotivoFueraDeServicio> motivos,
+                                         Empleado RILogueado) {
         // Metodo 10 del patron
         // Aquí se realiza el 'new' encapsulado
-        return new CambioEstado(proximoEstado, fechaHoraInicio, motivos, RILogueado);}
+        return new CambioEstado(proximoEstadoSismografo, fechaHoraInicio, motivos, RILogueado);}
 
 }

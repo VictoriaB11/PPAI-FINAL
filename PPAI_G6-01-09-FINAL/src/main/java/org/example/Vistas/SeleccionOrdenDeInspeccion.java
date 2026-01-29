@@ -1,7 +1,7 @@
 package org.example.Vistas;
 
 import org.example.Gestores.GestorRI;
-import org.example.Modelos.Estado;
+import org.example.Modelos.EstadoSismografo;
 import org.example.Modelos.MotivoTipo;
 import org.example.Modelos.OrdenDeInspeccion;
 
@@ -22,13 +22,13 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
     // Referencia al gestor y listas necesarias
     private GestorRI gestor;
     private List<MotivoTipo> motivos;
-    private List<Estado> estados;
+    private List<EstadoSismografo> estadoSismografos;
 
     // Constructor principal
-    public SeleccionOrdenDeInspeccion(GestorRI gestor, List<MotivoTipo> motivos, List<Estado> estados) {
+    public SeleccionOrdenDeInspeccion(GestorRI gestor, List<MotivoTipo> motivos, List<EstadoSismografo> estadoSismografos) {
         this.gestor = gestor;
         this.motivos = motivos;
-        this.estados = estados;
+        this.estadoSismografos = estadoSismografos;
 
         // Configuración de la ventana
         setTitle("Seleccionar Orden de Inspección");

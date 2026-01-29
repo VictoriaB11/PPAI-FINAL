@@ -4,12 +4,27 @@
     entonces no puede validar el XML contra un XSD, no rompe nada.-->
 
     <persistence-unit name="ppaiPU">
+        <!-- Clases existentes -->
         <class>org.example.Modelos.Rol</class>
         <class>org.example.Modelos.Empleado</class>
         <class>org.example.Modelos.Sismografo</class>
         <class>org.example.Modelos.CambioEstado</class>
+        <class>org.example.Modelos.Usuario</class>
+
+        <!-- NUEVA JERARQUÍA DE ESTADOS -->
+
+        <!-- 1. La clase abstracta base -->
+        <class>org.example.Modelos.EstadoSismografo</class>
+
+        <!-- 2. TODAS las clases concretas que hereden de ella -->
         <class>org.example.Modelos.InhabilitadoPorInspeccion</class>
         <class>org.example.Modelos.FueraDeServicio</class>
+        <!-- Agrega aquí cualquier otro estado concreto que tengas -->
+
+        <!-- La clase Estado independiente (para Ordenes) -->
+        <class>org.example.Modelos.Estado</class>
+
+
 
         <!--PU = Persistence Unit (Unidad de Persistencia), es el nombre de la configuración de JPA -->
         <properties>

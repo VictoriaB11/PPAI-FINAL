@@ -5,15 +5,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@DiscriminatorValue("FUERA_DE_SERVICIO")
-public class FueraDeServicio extends Estado {
+@DiscriminatorValue("FueraDeServicio")
+public class FueraDeServicio extends EstadoSismografo {
 
     public FueraDeServicio() {
         super("FueraDeServicio", "El sismografo está fuera de servicio", "Sismografo");
     }
 
     @Override
-    public CambioEstado crearCambioEstado(Estado proximoEstado,
+    public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
                                           LocalDateTime fechaHoraInicio,
                                           List<MotivoFueraDeServicio> motivos,
                                           Empleado RILogueado) {
@@ -31,7 +31,7 @@ public class FueraDeServicio extends Estado {
     // Estos metodos fueron implementados por una regla de java llamada Contrato de Clases Abstractas.
     // todas las clases hijas están obligadas a tener ese metodo escrito en su código.
     @Override
-    public Estado crearProximoEstado() {
+    public EstadoSismografo crearProximoEstado() {
         throw new RuntimeException(
                 "El estado FueraDeServicio no tiene un próximo estado automático."
         );

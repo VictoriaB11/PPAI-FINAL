@@ -96,7 +96,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
             tomarSeleccionMotivosTipos(seleccionados);
             tomarIngresoComentarioMotivo(motivosYComentarios);
 
-            new ConfirmacionCierreOrden(gestor, gestor.getEstadosDisponibles());
+            new ConfirmacionCierreOrden(gestor, gestor.buscarEstadosOrden());
             dispose();
         });
 

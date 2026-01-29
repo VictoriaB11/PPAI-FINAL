@@ -1,84 +1,71 @@
-// java
 package org.example.Modelos;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import jakarta.persistence.*;
 
-
-/**
- * Estado base para el patrón State.
- * Ajustar tipos de MotivoFueraDeServicio, CambioEstado y Empleado según tu modelo.
- */
-
 @Entity
-@Table(name = "estado")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) //Para que todas las subclases de Estado se guardan en UNA sola tabla
-@DiscriminatorColumn(name = "tipo_estado")  //Es una columna extra que Hibernate agrega para saber: “Esta fila corresponde a qué subclase concreta”.
-public abstract class Estado {
+@Table(name = "estado_orden")
+public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idEstado;
+    private Long id;
 
-    @Column(nullable = false)
-    protected String nombre;
+    private String nombre;
+    private String descripcion;
+    private String ambito;
 
-    protected String descripcion;
-    protected String ambito;
-
-    protected Estado() {
-        // constructor para frameworks/deserialización
+    public Estado() {
     }
 
-    protected Estado(String nombre, String descripcion, String ambito) {
+    public Estado(String nombre, String descripcion, String ambito) {
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.ambito = ambito;
     }
 
-    public Long getIdEstado() { return idEstado; }
-    public String getNombre() { return nombre; }
-    public String getDescripcion() { return descripcion; }
-    public String getAmbito() { return ambito; }
+    public String getNombre() {
+        return nombre;
+    }
 
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getAmbito() {
+        return ambito;
+    }
+
+    public void setAmbito(String ambito) {
+        this.ambito = ambito;
+    }
+
+    // Paso 11: esAmbitoOrdenDeInspeccion() Devuelve true si el valor de 'ambito' es exactamente "Orden de Inspección"
     public boolean esAmbitoOrdenDeInspeccion() {
-        if (ambito == null) return false;
-        String a = ambito.trim();
-        return a.equalsIgnoreCase("Orden de Inspeccion")
-                || a.equalsIgnoreCase("Orden de Inspección")
-                || a.equalsIgnoreCase("OrdenDeInspeccion");
+        return "Orden de Inspeccion".equalsIgnoreCase(ambito);
+    }
+
+    //Paso 11: esCerrada() Devuelve true si el nombre del estado es "Cerrada"
+    public boolean esCerrada() {
+        return "Cerrada".equalsIgnoreCase(nombre);
+    }
+
+    public boolean esCompletamenteRealizada() {
+        return "Completamente Realizada".equalsIgnoreCase(nombre);
     }
 
     public boolean esAmbitoSismografo() {
-        return ambito != null && ambito.equalsIgnoreCase("Sismografo");
+        return "Sismografo".equalsIgnoreCase(ambito);
     }
 
-    /* Queries polimórficas: por defecto false, los estados concretos sobreescriben lo que corresponda */
-    public boolean esCerrada() { return false; }
-    public boolean esCompletamenteRealizada() { return false; }
-    public boolean esFueraDeServicio() { return false; }
-
-    /* Contratos que deben implementar los estados concretos */
-    public abstract Estado crearProximoEstado();
-
-    public abstract CambioEstado crearCambioEstado(Estado proximoEstado,
-                                                   LocalDateTime fechaHoraInicio,
-                                                   List<MotivoFueraDeServicio> motivos,
-                                                   Empleado RILogueado);
-
-
-    /**
-     * Implementación por defecto de ponerEnReparacion:
-     * - crea el nuevo CambioEstado delegando a la subclase
-     * - delega a Sismografo la responsabilidad de cerrar el anterior y registrar el nuevo
-     *
-     * Asume la existencia de la firma: Sismografo.setEstadoActual(CambioEstado)
-     */
-    public abstract void ponerEnReparacion(Sismografo sismografo,
-                                  LocalDateTime fechaHoraInicio,
-                                  List<CambioEstado> cambiosEstado,
-                                  List<MotivoFueraDeServicio> motivos,
-                                  Empleado RILogueado);
+    public boolean esFueraDeServicio() {
+        return "Fuera de Servicio".equalsIgnoreCase(nombre);
+    }
 }

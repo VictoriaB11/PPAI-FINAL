@@ -1,9 +1,21 @@
 package org.example.Modelos;
 
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "usuario")
 public class Usuario {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String contrasenia;
     private String nombreUsuario;
+
+    @OneToOne // Un usuario corresponde a un empleado
+    @JoinColumn(name = "id_empleado") // Nombre de la columna en la tabla Usuario que guarda el ID del empleado
     private Empleado empleado;
 
     public Usuario() {

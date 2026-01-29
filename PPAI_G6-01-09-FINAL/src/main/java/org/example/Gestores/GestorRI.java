@@ -27,7 +27,7 @@ public class GestorRI {
     private OrdenDeInspeccion ordenSeleccionada;
     private String observacionCierre;
     private Map<MotivoTipo, String> motivosYComentarios; //ver si lo ponemos como lista
-    private List<Estado> estadosDisponibles;
+    private List<EstadoSismografo> estadosDisponibles;
     private List<MotivoTipo> motivosDisponibles;
     private boolean situacionSismografoHabilitada = false;
     private List<Sismografo> sismografosDisponibles;
@@ -102,26 +102,24 @@ public class GestorRI {
      */
     public List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas() {
         List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas; {
-            Empleado riLogueado = buscarEmpleadoLogueado();
-
-            EntityManager em = em();
+            Empleado emp = buscarEmpleadoLogueado();
+            EntityManager em = JPAUtil.getEntityManager();
             try {
-                // Trae SOLO las órdenes del empleado y que estén "completamente realizada"
-                List<OrdenDeInspeccion> ordenes = em.createQuery(
+                return em.createQuery(
                                 "SELECT o " +
                                         "FROM OrdenDeInspeccion o " +
                                         "JOIN FETCH o.estacionSismologica es " +
                                         "JOIN FETCH o.estado e " +
                                         "WHERE o.empleado = :emp " +
-                                        "AND e.tipoEstado = :tipo",
+                                        "AND e.ambito = :ambito " +
+                                        "AND e.nombre = :nombre " +
+                                        "ORDER BY o.fechaFinalizacion ASC",
                                 OrdenDeInspeccion.class
                         )
-                        .setParameter("emp", riLogueado)
-                        .setParameter("tipo", "ORDEN_COMPLETAMENTE_REALIZADA") // ajustalo a tu discriminator real
+                        .setParameter("emp", emp)
+                        .setParameter("ambito", "Orden de Inspección")  // o el string que uses
+                        .setParameter("nombre", "Completamente Realizada") // idem
                         .getResultList();
-
-                ordenarOrdenesDeInspeccionRealizadas(ordenes);
-                return ordenes;
 
             } finally {
                 em.close();
@@ -149,15 +147,14 @@ public class GestorRI {
     }
 
 
-
     // Paso 5: RI ingresa la observación de cierre
     public void tomarIngresoObservacionCierreInspeccion(String observacionCierre) {
         this.ordenSeleccionada.setObservacionCierre(observacionCierre);
         this.observacionCierre = observacionCierre;
     }
 
-    public void setEstadosDisponibles(List<Estado> estados) {
-        this.estadosDisponibles = estados;
+    public void setEstadosDisponibles(List<EstadoSismografo> estado) {
+        this.estadosDisponibles = estado;
     }
 
     //Paso 6: habilita la actualización de la situación del sismógrafo.
@@ -199,9 +196,7 @@ public class GestorRI {
         }
     }
 
-
     // Paso 7-a: registrar motivos seleccionados por el usuario.
-
     /**
      * Este metodo representa la interacción PantallaRI -> GestorRI : tomarSeleccionMotivosTipos()
      * Inicializa el mapa interno motivosYComentarios con los motivos seleccionados,
@@ -288,8 +283,9 @@ public class GestorRI {
     // Paso 11: buscarEstadoCerradoOrdenInspeccion() Recorre todos los estados disponibles buscando aquel que:
     // Sea del ámbito "Orden de Inspección" estado.esAmbitoOrdenDeInspeccion()
     // Tenga el nombre "Cerrado" (estado.esCerrada())
-    private Estado buscarEstadoCerradaOrdenInspeccion(List<Estado> estados) {
-        for (Estado estado : estados) {
+    private Estado buscarEstadoCerradaOrdenInspeccion(List<Estado> todosLosEstados) {
+        for (Estado estado : todosLosEstados) {
+            // Usamos los métodos que ya tienes en la clase Estado
             if (estado.esAmbitoOrdenDeInspeccion() && estado.esCerrada()) {
                 return estado;
             }
@@ -312,11 +308,11 @@ public class GestorRI {
     //Método 1 y de enganche del patrón
     // Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
 // Devuelve null si no se encuentra o si la lista de estados no está inicializada.
-    private Estado buscarEstadoFueraDeServicioParaSismografo() {
+    private EstadoSismografo buscarEstadoFueraDeServicioParaSismografo() {
         if (this.estadosDisponibles == null) return null;
-        for (Estado estado : this.estadosDisponibles) {
-            if (estado != null && estado.esAmbitoSismografo() && estado.esFueraDeServicio()) {
-                return estado;
+        for (EstadoSismografo estadoSismografo : this.estadosDisponibles) {
+            if (estadoSismografo != null && estadoSismografo.esAmbitoSismografo() && estadoSismografo.esFueraDeServicio()) {
+                return estadoSismografo;
             }
         }
         return null;
@@ -355,9 +351,9 @@ public class GestorRI {
         // 4. EL ENGANCHE (Self-Call):
         // Ejecutamos el metodo porque el diagrama lo exige.
         // Esto valida que el estado exista en la lista de estados disponibles del sistema.
-        Estado estadoFS = buscarEstadoFueraDeServicioParaSismografo();
+        EstadoSismografo estadoSismografoFS = buscarEstadoFueraDeServicioParaSismografo();
 
-        if (estadoFS == null) {
+        if (estadoSismografoFS == null) {
             throw new IllegalStateException("Error de consistencia: No se encuentra el estado 'Fuera de Servicio' en el sistema.");
         }
 
@@ -448,11 +444,21 @@ public class GestorRI {
         return ordenSeleccionada;
     }
 
-    public List<Estado> getEstadosDisponibles() {
+    public List<EstadoSismografo> getEstadosDisponibles() {
         return this.estadosDisponibles;
     }
 
     //para persistencia
+    // NUEVO MÉTODO: Buscar los estados correspondientes a Órdenes (tabla estado_orden)
+    public List<Estado> buscarEstadosOrden() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            // Buscamos todos los registros de la entidad Estado
+            return em.createQuery("SELECT e FROM Estado e", Estado.class).getResultList();
+        } finally {
+            em.close();
+        }
+    }
     private void guardarCierreEnBD(OrdenDeInspeccion ordenSeleccionada, Sismografo sismografo) {
         EntityManager em = JPAUtil.getEntityManager();
         try {

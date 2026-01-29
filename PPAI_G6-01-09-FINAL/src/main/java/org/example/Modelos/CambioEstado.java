@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "cambio_estado")
@@ -40,25 +38,24 @@ public class CambioEstado {
     private List<MotivoFueraDeServicio> motivosFueraDeServicio;
 
     //Muchos CambioEstado apuntan a un mismo Estado
-    @ManyToOne(optional = false, //No puede existir un CambioEstado sin Estado, Cada fila de cambio_estado OBLIGATORIAMENTE tiene que tener un estado_id
-            cascade = CascadeType.PERSIST) //Si persisto un CambioEstado y su Estado todavía no está en la BD → guardalo automáticamente
-    @JoinColumn(name = "estado_id") //La FK que une cambio_estado con estado se llama estado_id
-    private Estado estado;
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "id_estado_sismografo")
+    private EstadoSismografo estadoSismografo;
 
 
     public CambioEstado() {
     }
 
-    public CambioEstado(Estado estado, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
-        this.estado = estado;
+    public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
+        this.estadoSismografo = estadoSismografo;
         this.fechaHoraInicio = fechaHoraInicio;
         this.fechaHoraFin = fechaHoraFin;
         this.motivosFueraDeServicio = motivosFueraDeServicio;
         this.RILogueado = RILogueado;
     }
 
-    public CambioEstado(Estado estado, LocalDateTime fechaHoraInicio, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
-        this(estado, fechaHoraInicio, null, motivosFueraDeServicio, RILogueado);
+    public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
+        this(estadoSismografo, fechaHoraInicio, null, motivosFueraDeServicio, RILogueado);
     }
 
 
@@ -103,12 +100,12 @@ public class CambioEstado {
         return RILogueado;
     }
 
-    public void setEstado(Estado estado) {
-        this.estado = estado;
+    public void setEstado(EstadoSismografo estadoSismografo) {
+        this.estadoSismografo = estadoSismografo;
     }
 
-    public Estado getEstado() {
-        return estado;
+    public EstadoSismografo getEstado() {
+        return estadoSismografo;
     }
 
 

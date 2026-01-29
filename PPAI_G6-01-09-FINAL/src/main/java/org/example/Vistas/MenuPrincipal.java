@@ -32,20 +32,30 @@ public class MenuPrincipal extends JFrame {
     }
 
     private void abrirVentana() {
+
+        //  Validación de sesión
+        if (sesionActual == null) {
+            JOptionPane.showMessageDialog(this, "Sesión nula. No se puede iniciar el Caso de Uso.");
+            return;
+        }
+
         GestorRI gestor = new GestorRI();
 
-        // Paso 1 (ahora solo sesión)
+        // Paso 1: iniciar CU
         gestor.nuevoCierreOrdenInspeccion(this.sesionActual);
 
-        // Paso 2
+        // Paso 2: buscar órdenes
         List<OrdenDeInspeccion> ordenesAMostrar = gestor.buscarOrdenesDeInspeccionRealizadas();
         List<MotivoTipo> motivosGestor = gestor.buscarTiposDeMotivos();
-        List<Estado> estadosGestor = gestor.getEstadosDisponibles();
+        List<EstadoSismografo> estadosGestor = gestor.getEstadosDisponibles();
 
         if (!ordenesAMostrar.isEmpty()) {
             new SeleccionOrdenDeInspeccion(gestor, motivosGestor, estadosGestor);
         } else {
-            JOptionPane.showMessageDialog(this, "No hay órdenes completamente realizadas para cerrar.");
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No hay órdenes completamente realizadas para cerrar."
+            );
         }
     }
 }
