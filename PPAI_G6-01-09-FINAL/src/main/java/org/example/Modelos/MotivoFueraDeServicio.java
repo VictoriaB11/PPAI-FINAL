@@ -1,9 +1,25 @@
 package org.example.Modelos;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name="motivo_fuera_servicio")
 public class MotivoFueraDeServicio {
 
-    public String comentario;
-    public MotivoTipo motivoTipo;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional=false)
+    @JoinColumn(name="cambio_estado_id")
+    private CambioEstado cambioEstado;
+
+    @ManyToOne(optional=false)
+    @JoinColumn(name="motivo_tipo_id")
+    private MotivoTipo motivoTipo;
+
+    private String comentario;
+
 
     public MotivoFueraDeServicio() {
     }

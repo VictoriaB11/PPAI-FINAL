@@ -19,6 +19,9 @@ public class Sesion {
         this.usuario = usuario;
     }
 
+    public Sesion(Usuario usuario) {
+    }
+
     public LocalDateTime getFechaHoraInicio() {
         return fechaHoraInicio;
     }

@@ -3,12 +3,15 @@ package org.example.Modelos;
 import java.time.LocalDateTime;
 //import java.util.Collections;
 import java.util.List;
+import jakarta.persistence.*;
 
 /**
  * Estado concreto: InhabilitadoPorInspeccion
  * Métodos en el orden del diagrama: ponerEnReparacion(array), buscarCambioDeEstadoActual,
  * crearProximoEstado, crearCambioDeEstado.
  */
+@Entity
+@DiscriminatorValue("INHABILITADO_POR_INSPECCION")
 public class InhabilitadoPorInspeccion extends Estado {
 
     public InhabilitadoPorInspeccion() {

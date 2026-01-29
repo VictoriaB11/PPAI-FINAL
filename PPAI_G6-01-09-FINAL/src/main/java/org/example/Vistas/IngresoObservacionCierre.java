@@ -43,7 +43,10 @@ public class IngresoObservacionCierre extends JFrame {
                 String observacion = txtObservacion.getText().trim();
 
                 if (observacion.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Debe ingresar una observación válida.");
+                    JOptionPane.showMessageDialog(
+                            IngresoObservacionCierre.this,
+                            "Debe ingresar una observación válida."
+                    );
                     return;
                 }
 
@@ -55,7 +58,10 @@ public class IngresoObservacionCierre extends JFrame {
                     new SeleccionMotivosYComentarios(gestor, motivosDisponibles);
                     dispose(); // Cerramos esta ventana
                 } else {
-                    JOptionPane.showMessageDialog(null, "Ocurrió un error inesperado. Verifique los datos.");
+                    JOptionPane.showMessageDialog(
+                            IngresoObservacionCierre.this,
+                            "Ocurrió un error inesperado. Verifique los datos."
+                    );
                 }
             }
         });

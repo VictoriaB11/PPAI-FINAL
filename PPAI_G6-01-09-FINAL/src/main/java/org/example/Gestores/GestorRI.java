@@ -10,16 +10,15 @@ import org.example.Modelos.*;
 import org.example.Vistas.InterfazMonitor;
 import org.example.Vistas.InterfazEnvioMail;
 import org.example.Vistas.SeleccionOrdenDeInspeccion;
-import org.example.Persistencia.SismografoDAO;
-import org.example.Persistencia.CambioEstadoDAO;
-import org.example.Persistencia.EstadoDAO;
-import org.example.Persistencia.MotivoTipoDAO;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import javax.swing.SwingUtilities;
 import java.awt.Window;
 import java.util.ArrayList;
+import jakarta.persistence.EntityManager;
+import org.example.Persistencia.JPAUtil;
+
 
 
 public class GestorRI {
@@ -32,6 +31,7 @@ public class GestorRI {
     private List<MotivoTipo> motivosDisponibles;
     private boolean situacionSismografoHabilitada = false;
     private List<Sismografo> sismografosDisponibles;
+    private Long idOrdenSeleccionada;
 
 
     private InterfazMonitor interfazMonitor;
@@ -41,12 +41,11 @@ public class GestorRI {
     private List<Empleado> empleados = new ArrayList<>();
     private final java.util.List<Window> ventanasAbiertas = new ArrayList<>(); // FinCU
 
-    // PERSISTENCIA
-    private final SismografoDAO sismografoDAO = new SismografoDAO();
-    private final CambioEstadoDAO cambioEstadoDAO = new CambioEstadoDAO();
-    private final EstadoDAO estadoDAO = new EstadoDAO();
-    private final MotivoTipoDAO motivoTipoDAO = new MotivoTipoDAO();
-    private final Map<Sismografo, Integer> sismografoIdMap = new HashMap<>(); // Mapa para asociar cada objeto Sismografo (memoria) con su ID en la BD
+    //Para persistencia
+    private EntityManager em() {
+        return JPAUtil.getEntityManager();
+    }
+
 
 
 //PASO 1:
@@ -79,27 +78,10 @@ public class GestorRI {
     /**
      * Este metodo inicia el caso de uso. Recibe los datos necesarios desde la pantalla.
      */
-    public void nuevoCierreOrdenInspeccion(Sesion sesion, List<OrdenDeInspeccion> ordenes, List<Sismografo> sismografos) {
-        // Guarda la Sesión actual (para poder obtener al Usuario/Empleado logueado en Paso 2).
+    public void nuevoCierreOrdenInspeccion(Sesion sesion) {
         this.sesion = sesion;
-
-        // Guarda TODAS las órdenes (el Gestor será el responsable de filtrarlas según el empleado y estado).
-        this.ordenesDeInspeccion = ordenes;
-
-        // Guarda el catálogo de Sismógrafos (se usará en pasos posteriores para cambiar estado, etc.).
-        this.sismografosDisponibles = sismografos;
-
-        // PERSISTENCIA: asegurar que cada Sismografo tenga un ID en BD
-        // Para cada sismógrafo que existe en memoria, creamos un registro
-        // y guardamos la relación objeto->id en el mapa sismografoIdMap.
-        for (Sismografo s : this.sismografosDisponibles) {
-            if (!sismografoIdMap.containsKey(s)) {
-                int idBD = sismografoDAO.insertarSismografo();
-                sismografoIdMap.put(s, idBD);
-            }
-        }
-
     }
+
 
 //PASO 2:
 
@@ -119,28 +101,32 @@ public class GestorRI {
      * Al finalizar, notifica a la Pantalla para que muestre las órdenes (Gestor -> Pantalla)
      */
     public List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas() {
-        //Obtiene al Empleado actual usando el metodo anterior.
-        Empleado RILogueado = buscarEmpleadoLogueado();
+        List<OrdenDeInspeccion> buscarOrdenesDeInspeccionRealizadas; {
+            Empleado riLogueado = buscarEmpleadoLogueado();
 
-        //Prepara una lista resultado para ir acumulando solo las órdenes válidas.
-        List<OrdenDeInspeccion> ordenesFiltradas = new ArrayList<>();
+            EntityManager em = em();
+            try {
+                // Trae SOLO las órdenes del empleado y que estén "completamente realizada"
+                List<OrdenDeInspeccion> ordenes = em.createQuery(
+                                "SELECT o " +
+                                        "FROM OrdenDeInspeccion o " +
+                                        "JOIN FETCH o.estacionSismologica es " +
+                                        "JOIN FETCH o.estado e " +
+                                        "WHERE o.empleado = :emp " +
+                                        "AND e.tipoEstado = :tipo",
+                                OrdenDeInspeccion.class
+                        )
+                        .setParameter("emp", riLogueado)
+                        .setParameter("tipo", "ORDEN_COMPLETAMENTE_REALIZADA") // ajustalo a tu discriminator real
+                        .getResultList();
 
-        // Recorre TODAS las órdenes disponibles (inyectadas en Paso 1)...
-        for (OrdenDeInspeccion orden : ordenesDeInspeccion) {
-            // ...y se queda solo con las que:
-            //    a) Son del empleado logueado (orden.esEmpleado(empleadoLogueado))
-            //    b) Tienen estado "Completamente Realizada" (orden.esCompletamenteRealizada())
-            if (orden.esEmpleado(RILogueado) && orden.esCompletamenteRealizada()) {
-                // Si cumple ambas condiciones, se agrega a la lista resultado.
-                // (Los datos puntuales para mostrar se pedirán más tarde con getDatos())
-                ordenesFiltradas.add(orden);
-                // Cumple el llamado del diagrama sin mostrar nada
-                orden.getDatos();
+                ordenarOrdenesDeInspeccionRealizadas(ordenes);
+                return ordenes;
+
+            } finally {
+                em.close();
             }
         }
-        //Para ordenar las órdenes filtradas por fecha de finalización (ascendente: antiguas primero).
-        ordenarOrdenesDeInspeccionRealizadas(ordenesFiltradas);
-        return ordenesFiltradas;
     }
 
     /**
@@ -156,10 +142,12 @@ public class GestorRI {
 // Fin PASO 2
 
     // Paso 3: RI informa al gestor la orden seleccionada
-    public void tomarSelecOrdenDeInspeccion(SeleccionOrdenDeInspeccion pantallaSeleccionOrdenDeInspeccion, OrdenDeInspeccion ordenSeleccionada) {
+    public void tomarSelecOrdenDeInspeccion(SeleccionOrdenDeInspeccion pantalla, OrdenDeInspeccion ordenSeleccionada) {
         this.ordenSeleccionada = ordenSeleccionada;
-        pantallaSeleccionOrdenDeInspeccion.pedirIngresoObservacionDeCierre();
+        this.idOrdenSeleccionada = ordenSeleccionada.getId(); // tenés que tener getId() en OrdenDeInspeccion entity
+        pantalla.pedirIngresoObservacionDeCierre();
     }
+
 
 
     // Paso 5: RI ingresa la observación de cierre
@@ -203,8 +191,12 @@ public class GestorRI {
 
     //Paso 6: obtener los tipos de motivos disponibles
     public List<MotivoTipo> buscarTiposDeMotivos() {
-        // Devuelve la lista si está disponible, o una lista vacía si no fue inicializada
-        return this.motivosDisponibles != null ? this.motivosDisponibles : new ArrayList<>();
+        var em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery("SELECT m FROM MotivoTipo m", MotivoTipo.class).getResultList();
+        } finally {
+            em.close();
+        }
     }
 
 
@@ -245,18 +237,24 @@ public class GestorRI {
         if (!validarMotivosMinimos()) {
             return false; // Si no hay al menos un motivo con comentario, no se puede cerrar la orden.
         }
-        // si pasa la validación cambiamos el estado de la orden
         Estado estadoCerrada = buscarEstadoCerradaOrdenInspeccion(todosLosEstados);
         LocalDateTime fechaActual = tomarFechaHoraActual();
         cerrarOrdenInspeccion(estadoCerrada, fechaActual);
 
-        //cambiamos el estado del sismografo
-        cambiarEstadoSismografo();
+        // Cambiar estado sismógrafo y conservar referencia
+        EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
+        Sismografo sismografo = buscarSismografoPorEstacion(estacion);
+        if (sismografo == null) {
+            throw new IllegalStateException("No se encontró sismógrafo para estación: " + estacion.getNombre());
+        }
 
-        // Persistencia: el cambio de estado y sus motivos
-        persistirCambioEstadoEnBD();
+        // Esto sigue igual, solo que ahora NO vuelvas a buscarlo dentro
+        cambiarEstadoSismografo(); // (si querés, después lo refactorizamos para que use sismografo ya hallado)
 
-        return true; // El cierre fue exitoso.
+        //Persistencia real
+        guardarCierreEnBD(ordenSeleccionada, sismografo);
+
+        return true;
     }
 
 // Paso 10: Sistema: valida que exista una observación de cierre de orden y
@@ -454,69 +452,31 @@ public class GestorRI {
         return this.estadosDisponibles;
     }
 
+    //para persistencia
+    private void guardarCierreEnBD(OrdenDeInspeccion ordenSeleccionada, Sismografo sismografo) {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            em.getTransaction().begin();
 
-    // PERSISTENCIA: guardar el CambioEstado real
-    private void persistirCambioEstadoEnBD() {
-        // 1) Obtener la estación asociada a la orden seleccionada
-        EstacionSismologica estacion = ordenSeleccionada.getEstacionSismologica();
+            // IMPORTANTE: aseguramos entidades managed
+            OrdenDeInspeccion ordenManaged = em.merge(ordenSeleccionada);
+            Sismografo sismManaged = em.merge(sismografo);
 
-        // 2) Buscar el sismógrafo asociado a esa estación
-        Sismografo sismografo = buscarSismografoPorEstacion(estacion);
-        if (sismografo == null) {
-            throw new IllegalStateException("No se encontró sismógrafo para persistir el cambio");
+            // Si tu cambio de estado creó NUEVOS objetos (CambioEstado, MotivoFueraDeServicio, etc)
+            // y tenés cascade bien (OneToMany con cascade=ALL), con merge alcanza.
+            // Si no tenés cascade en algún punto, acá se persiste explícito.
+
+            em.getTransaction().commit();
+
+            // sincronizamos referencias del gestor (opcional pero recomendado)
+            this.ordenSeleccionada = ordenManaged;
+
+        } catch (Exception ex) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            throw ex;
+        } finally {
+            em.close();
         }
-
-        // 3) Obtener o crear el ID del sismógrafo en la BD
-        Integer sismografoId = sismografoIdMap.get(sismografo);
-        if (sismografoId == null) {
-            int nuevoId = sismografoDAO.insertarSismografo();
-            sismografoIdMap.put(sismografo, nuevoId);
-            sismografoId = nuevoId;
-        }
-
-        // 4) Obtener el último CambioEstado (ya creado en memoria)
-        CambioEstado ultimoCambio = sismografo.getEstadoActual();
-        if (ultimoCambio == null) {
-            throw new IllegalStateException("El sismógrafo no tiene estado actual para persistir");
-        }
-
-        // 5) Obtener el estado del cambio (Fuera de Servicio)
-        Estado estadoFS = ultimoCambio.getEstado();
-
-        // 6) Obtener el ID del estado en la BD
-        int estadoId = estadoDAO.obtenerIdPorNombreYAmbito(
-                estadoFS.getNombre(),
-                estadoFS.getAmbito()
-        );
-
-        // 7) Obtener nombre del empleado responsable logueado
-        Empleado emp = ultimoCambio.getEmpleado();
-        String nombreRILogueado = (emp != null)
-                ? emp.getNombre() + " " + emp.getApellido()
-                : null;
-
-        // 8) Insertar el cambio de estado en la BD
-        int cambioEstadoId = cambioEstadoDAO.insertarCambioEstado(
-                sismografoId,
-                estadoId,
-                ultimoCambio.getFechaHoraInicio(), // ✔ getter correcto
-                nombreRILogueado
-        );
-
-        // 9) Insertar los motivos asociados al cambio
-        if (ultimoCambio.getMotivosFueraDeServicio() != null) {
-            for (MotivoFueraDeServicio mfs : ultimoCambio.getMotivosFueraDeServicio()) {
-                MotivoTipo tipo = mfs.getMotivoTipo(); // ✔ getter correcto
-                int motivoId = motivoTipoDAO.obtenerIdPorDescripcion(
-                        tipo.getDescripcion()
-                );
-
-                cambioEstadoDAO.insertarMotivoEnCambio(cambioEstadoId, motivoId);
-            }
-        }
-
-        // 10) Actualizar el estado actual del sismógrafo en la BD
-        sismografoDAO.actualizarEstadoActual(sismografoId, cambioEstadoId);
     }
 
 }

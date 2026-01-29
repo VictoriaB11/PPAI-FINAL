@@ -51,45 +51,48 @@ public class SeleccionMotivosYComentarios extends JFrame {
             boolean algunComentarioVacio = false;
             boolean comentarioSinSeleccion = false;
 
-            for (int i = 0; i < checkBoxes.size(); i++) {
-                JCheckBox checkBox = checkBoxes.get(i);
-                MotivoTipo motivo = motivosDisponibles.get(i);
+            for (JCheckBox checkBox : checkBoxes) {
+
+                // Recupero el motivo asociado a ESTE checkbox (sin depender de índices)
+                MotivoTipo motivo = (MotivoTipo) checkBox.getClientProperty("motivo");
+
                 JTextField campo = camposTexto.get(motivo);
-                String comentario = campo.getText();
+                String comentario = (campo != null) ? campo.getText().trim() : "";
 
                 if (checkBox.isSelected()) {
-                    if (comentario == null || comentario.trim().isEmpty()) {
+                    if (comentario.isEmpty()) {
                         algunComentarioVacio = true;
                     } else {
-                        motivosYComentarios.put(motivo, comentario.trim());
+                        motivosYComentarios.put(motivo, comentario);
                     }
                 } else {
-                    // Si no está seleccionado pero tiene comentario, es un error
-                    if (comentario != null && !comentario.trim().isEmpty()) {
+                    // Si no está seleccionado pero tiene comentario, es error
+                    if (!comentario.isEmpty()) {
                         comentarioSinSeleccion = true;
                     }
                 }
             }
 
             if (motivosYComentarios.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Debe seleccionar al menos un motivo.");
+                JOptionPane.showMessageDialog(SeleccionMotivosYComentarios.this,
+                        "Debe seleccionar al menos un motivo.");
                 return;
             }
 
             if (algunComentarioVacio) {
-                JOptionPane.showMessageDialog(null, "Debe ingresar un comentario para CADA motivo seleccionado.");
+                JOptionPane.showMessageDialog(SeleccionMotivosYComentarios.this,
+                        "Debe ingresar un comentario para CADA motivo seleccionado.");
                 return;
             }
 
             if (comentarioSinSeleccion) {
-                JOptionPane.showMessageDialog(null, "No puede ingresar comentarios en motivos que no fueron seleccionados.");
+                JOptionPane.showMessageDialog(SeleccionMotivosYComentarios.this,
+                        "No puede ingresar comentarios en motivos que no fueron seleccionados.");
                 return;
             }
 
-
             // Paso 7
             List<MotivoTipo> seleccionados = new ArrayList<>(motivosYComentarios.keySet());
-
             tomarSeleccionMotivosTipos(seleccionados);
             tomarIngresoComentarioMotivo(motivosYComentarios);
 
@@ -101,13 +104,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         btnCancelar.addActionListener(e -> gestor.finCU());
     }
 
-    //Paso 6: mostrar motivos en la interfaz.
-    /**
-     * Este metodo construye dinámicamente la interfaz gráfica para que el usuario
-     * pueda seleccionar uno o más motivos y escribir un comentario asociado a cada uno.
-     * Por cada motivo recibido, se crea una fila con un JCheckBox (para seleccionar)
-     * y un JTextField (para ingresar el comentario).
-     */
+    // Paso 6: mostrar motivos en la interfaz
     public void mostrarMotivosTiposParaSeleccion(List<MotivoTipo> motivos) {
         panelPrincipal.removeAll();
         checkBoxes.clear();
@@ -117,6 +114,9 @@ public class SeleccionMotivosYComentarios extends JFrame {
             JPanel fila = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
             JCheckBox checkBox = new JCheckBox(motivo.getDescripcion());
+            // Guardo el motivo asociado al checkbox (para no depender de la posición i)
+            checkBox.putClientProperty("motivo", motivo);
+
             JTextField textField = new JTextField(20);
 
             checkBoxes.add(checkBox);
@@ -129,7 +129,6 @@ public class SeleccionMotivosYComentarios extends JFrame {
             panelPrincipal.add(fila);
         }
 
-        // Panel de botones
         JPanel panelBotones = new JPanel();
         panelBotones.add(btnConfirmar);
         panelBotones.add(btnCancelar);
@@ -139,32 +138,16 @@ public class SeleccionMotivosYComentarios extends JFrame {
         panelPrincipal.repaint();
     }
 
-    //Paso 6: mostrar la ventana de selección.
-    /**
-     * Este metodo hace visible la ventana que contiene los motivos y campos de comentario.
-     * Es llamado luego de construir la interfaz con los motivos disponibles.
-     */
-
     public void pedirMotivosTipoParaSeleccionYComentario() {
         setVisible(true);
     }
 
-    // Paso 7-a: el usuario (RI) realiza la selección de motivos en la interfaz.
-    /**
-     * Este metodo representa la interacción RI -> PantallaRI : tomarSeleccionMotivosTipos()
-     * y luego transmite esa selección al gestor para su procesamiento.
-     *
-     */
+    // Paso 7-a
     public void tomarSeleccionMotivosTipos(List<MotivoTipo> seleccionados) {
         gestor.tomarSeleccionMotivosTipos(seleccionados);
     }
 
-    //Paso 7-b: el usuario (RI) ingresa comentarios para los motivos seleccionados.
-    /**
-     * Este metodo representa la interacción RI -> PantallaRI : tomarIngresoComentarioMotivo()
-     * y luego transmite esos comentarios al gestor para su registro.
-     *
-     */
+    // Paso 7-b
     public void tomarIngresoComentarioMotivo(Map<MotivoTipo, String> comentarios) {
         gestor.tomarIngresoComentarioMotivo(comentarios);
     }

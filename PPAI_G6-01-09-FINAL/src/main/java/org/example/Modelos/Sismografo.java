@@ -1,17 +1,48 @@
 package org.example.Modelos;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "sismografo")
 public class Sismografo {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "fecha_adquisicion")
     private LocalDate fechaAdquisicion;
+
+    /**
+     * Identificador funcional del sismógrafo, lo marcamos unique para que no se repita.
+     */
+    @Column(name = "identificador_sismografo", unique = true)
     private Integer identificadorSismografo;
+
+    @Column(name = "nro_serie")
     private Integer nroSerie;
+
+    /**
+     * Historial persistido.
+     * mappedBy: el "dueño" de la relación está en CambioEstado.sismografo
+     * cascade: si guardo sismografo, se guardan sus cambios de estado.
+     * orphanRemoval: si saco un cambio del historial, se borra en DB.
+     */
+    @OneToMany(mappedBy = "sismografo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CambioEstado> historialEstados = new ArrayList<>();
+
+    /**
+     * No lo persistimos: lo calculamos del historial (el que tiene fechaHoraFin = null).
+     */
+    @Transient
     private CambioEstado ultimoCambioEstado;
+
+    @ManyToOne
+    @JoinColumn(name = "estacion_id")
     private EstacionSismologica estacionSismologica;
 
     public Sismografo() {
@@ -21,14 +52,18 @@ public class Sismografo {
         this.fechaAdquisicion = fechaAdquisicion;
         this.identificadorSismografo = identificadorSismografo;
         this.nroSerie = nroSerie;
-        this.historialEstados = historialEstados;
-        this.ultimoCambioEstado = buscarUltimoCambioEstado(); //ns si va
+        //por la persistencia el chat dice que no van, por las lo comento
+        //this.historialEstados = historialEstados;
+        //this.ultimoCambioEstado = buscarUltimoCambioEstado(); //ns si va
     }
 
     // Metodo 2 del patrón
     public void ponerEnReparacion(LocalDateTime fechaHoraActual,
                                   List<MotivoFueraDeServicio> motivos,
                                   Empleado RILogueado) {
+
+        // Recalculamos el estado actual desde el historial persistido
+        this.ultimoCambioEstado = buscarUltimoCambioEstado();
 
         // Validamos que tengamos un estado actual cargado
         if (this.ultimoCambioEstado != null && this.ultimoCambioEstado.getEstado() != null) {
@@ -51,7 +86,17 @@ public class Sismografo {
         if (this.historialEstados == null) {
             this.historialEstados = new ArrayList<>();
         }
+        // Para PERSISTENCIA:
+        // setear el back-reference para JPA:
+        // es: además de agregar el cambio a la lista, también decirle al CambioEstado quién es su Sismografo.
+        //Porque el dueño de esta relacion ManyToOne en Cambio de estado es la FK de sismogafo
+        cambio.setSismografo(this);
+
         this.historialEstados.add(cambio);
+
+        // Mantener referencia al "actual" en memoria
+        this.ultimoCambioEstado = cambio;
+
 
     }
 
@@ -77,18 +122,12 @@ public class Sismografo {
         // simplemente retornamos esa variable.
         return this.ultimoCambioEstado;
     }
+    // =========================
+    // Getters / Setters
+    // =========================
 
-
-    public boolean esDeMiEstacion(EstacionSismologica estacion) {
-        return this.estacionSismologica != null && this.estacionSismologica.equals(estacion);
-    }
-
-    public EstacionSismologica getEstacionSismologica() {
-        return estacionSismologica;
-    }
-
-    public void setEstacionSismologica(EstacionSismologica estacionSismologica) {
-        this.estacionSismologica = estacionSismologica;
+    public Long getId() {
+        return id;
     }
 
     public LocalDate getFechaAdquisicion() {
@@ -124,6 +163,18 @@ public class Sismografo {
     }
 
     public CambioEstado getEstadoActual() {
-        return ultimoCambioEstado;
+        return buscarUltimoCambioEstado();
+    }
+
+    public EstacionSismologica getEstacionSismologica() {
+        return estacionSismologica;
+    }
+
+    public void setEstacionSismologica(EstacionSismologica estacionSismologica) {
+        this.estacionSismologica = estacionSismologica;
+    }
+
+    public boolean esDeMiEstacion(EstacionSismologica estacion) {
+        return this.estacionSismologica != null && this.estacionSismologica.equals(estacion);
     }
 }

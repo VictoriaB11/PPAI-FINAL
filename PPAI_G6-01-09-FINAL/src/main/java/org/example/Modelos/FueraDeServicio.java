@@ -1,14 +1,16 @@
 package org.example.Modelos;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Entity
+@DiscriminatorValue("FUERA_DE_SERVICIO")
 public class FueraDeServicio extends Estado {
 
     public FueraDeServicio() {
         super("FueraDeServicio", "El sismografo está fuera de servicio", "Sismografo");
     }
-
 
     @Override
     public CambioEstado crearCambioEstado(Estado proximoEstado,

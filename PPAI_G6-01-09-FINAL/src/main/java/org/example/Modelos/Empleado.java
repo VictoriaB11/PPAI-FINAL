@@ -1,19 +1,34 @@
 package org.example.Modelos;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "empleado")
 public class Empleado {
 
-    private Integer idEmpleado;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_empleado")
+    private Long idEmpleado;
+
+    @Column(nullable = false)
     private String apellido;
+
+    @Column(nullable = false)
     private String nombre;
+
+    @Column(nullable = false, unique = true)
     private String mail;
+
     private String telefono;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "rol_id")
     private Rol rol;
 
     public Empleado() {
     }
 
-    public Empleado(Integer idEmpleado, String apellido, String nombre, String mail, String telefono, Rol rol) {
-        this.idEmpleado = idEmpleado;
+    public Empleado( String apellido, String nombre, String mail, String telefono, Rol rol) {
         this.apellido = apellido;
         this.nombre = nombre;
         this.mail = mail;
@@ -21,18 +36,14 @@ public class Empleado {
         this.rol = rol;
     }
 
-    public Integer getIdEmpleado() {
+    public Long getIdEmpleado() {
         return idEmpleado;
     }
 
-    public void setIdEmpleado(Integer idEmpleado) {
-        this.idEmpleado = idEmpleado;
-    }
 
     public String getApellido() {
         return apellido;
     }
-
     public void setApellido(String apellido) {
         this.apellido = apellido;
     }
@@ -40,7 +51,6 @@ public class Empleado {
     public String getNombre() {
         return nombre;
     }
-
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
@@ -52,7 +62,6 @@ public class Empleado {
     public String getTelefono() {
         return telefono;
     }
-
     public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
@@ -60,7 +69,6 @@ public class Empleado {
     public Rol getRol() {
         return rol;
     }
-
     public void setRol(Rol rol) {
         this.rol = rol;
     }

@@ -1,15 +1,45 @@
 package org.example.Modelos;
 
 import java.time.LocalDateTime;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "orden_inspeccion")
 public class OrdenDeInspeccion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private LocalDateTime fechaHoraCierre; // cuando actualiza el estado a cerrada setea su fecha de cierre.
     private LocalDateTime fechaFinalizacion; //para ordenes completamente realizadas
+
+    @Column(name = "numero_orden", nullable = false, unique = true)
     private Integer numeroDeOrden;
+
+    @Column(name = "observacion_cierre")
     private String observacionCierre;
+
+    //Muchas órdenes pueden estar asignadas al mismo empleado.
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "empleado_id", nullable = false)
     private Empleado empleado;
+
+    /**
+     * Estado actual de la orden.
+     * OJO: si creás estados "new" y no los persistís antes, te va a tirar transient.
+     * Por eso pongo cascade PERSIST: si el estado es nuevo, lo inserta.
+     */
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "estado_id", nullable = false)
     private Estado estado;
+
+    /**
+     * Muchas órdenes pertenecen a una estación.
+     * La estación normalmente existe, por eso sin cascade.
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "estacion_id", nullable = false)
     private EstacionSismologica estacionSismologica;
 
     public OrdenDeInspeccion() {
@@ -26,6 +56,8 @@ public class OrdenDeInspeccion {
     }
 
     // --- Getters / setters básicos ---
+    public Long getId() { return id; }
+
     public LocalDateTime getFechaHoraCierre() { return fechaHoraCierre; }
 
     public void setFechaHoraFinalizacion(LocalDateTime fechaHoraFinalizacion) { this.fechaFinalizacion = fechaHoraFinalizacion; }
@@ -43,7 +75,6 @@ public class OrdenDeInspeccion {
     public EstacionSismologica getEstacionSismologica() {
         return estacionSismologica;
     }
-
     public void setEstacionSismologica(EstacionSismologica estacionSismologica) {
         this.estacionSismologica = estacionSismologica;
     }

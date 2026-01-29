@@ -3,14 +3,27 @@ package org.example.Modelos;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import jakarta.persistence.*;
+
 
 /**
  * Estado base para el patrón State.
  * Ajustar tipos de MotivoFueraDeServicio, CambioEstado y Empleado según tu modelo.
  */
+
+@Entity
+@Table(name = "estado")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) //Para que todas las subclases de Estado se guardan en UNA sola tabla
+@DiscriminatorColumn(name = "tipo_estado")  //Es una columna extra que Hibernate agrega para saber: “Esta fila corresponde a qué subclase concreta”.
 public abstract class Estado {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idEstado;
+
+    @Column(nullable = false)
     protected String nombre;
+
     protected String descripcion;
     protected String ambito;
 
@@ -24,9 +37,11 @@ public abstract class Estado {
         this.ambito = ambito;
     }
 
+    public Long getIdEstado() { return idEstado; }
     public String getNombre() { return nombre; }
     public String getDescripcion() { return descripcion; }
     public String getAmbito() { return ambito; }
+
 
     public boolean esAmbitoOrdenDeInspeccion() {
         if (ambito == null) return false;

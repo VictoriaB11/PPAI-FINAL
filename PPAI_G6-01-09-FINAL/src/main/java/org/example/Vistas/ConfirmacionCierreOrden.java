@@ -1,7 +1,9 @@
 package org.example.Vistas;
 
 import org.example.Gestores.GestorRI;
+import org.example.Modelos.EstacionSismologica;
 import org.example.Modelos.Estado;
+import org.example.Modelos.Sismografo;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -50,7 +52,7 @@ public class ConfirmacionCierreOrden extends JFrame {
 
         // Muestra un mensaje para confirmar si el usuario desea cerrar la orden
         int opcion = JOptionPane.showConfirmDialog(
-                null,
+                this,
                 "¿Está segura/o de que desea cerrar la orden de inspección?",
                 "Confirmar cierre",
                 JOptionPane.YES_NO_OPTION
@@ -75,12 +77,14 @@ public class ConfirmacionCierreOrden extends JFrame {
             String estadoOrden = gestor.getOrdenSeleccionada().getEstado().getNombre();
             // Obtiene el estado final del sismógrafo asociado a la estación sismológica
 
-            String estadoSismografo = gestor.getOrdenSeleccionada()
-                    .getEstacionSismologica()
-                    .getSismografo()
-                    .getEstadoActual()
-                    .getEstado()
-                    .getNombre();
+            EstacionSismologica estacion = gestor.getOrdenSeleccionada().getEstacionSismologica();
+            Sismografo sism = gestor.buscarSismografoPorEstacion(estacion);
+
+            String estadoSismografo =
+                    (sism != null && sism.getEstadoActual() != null && sism.getEstadoActual().getEstado() != null)
+                            ? sism.getEstadoActual().getEstado().getNombre()
+                            : "(sin estado)";
+
             // Muestra un mensaje de confirmación con los estados finales
 
             JOptionPane.showMessageDialog(

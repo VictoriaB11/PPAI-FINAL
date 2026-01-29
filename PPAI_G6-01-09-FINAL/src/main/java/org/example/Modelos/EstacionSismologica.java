@@ -3,19 +3,38 @@ package org.example.Modelos;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "estacion_sismologica")
 public class EstacionSismologica {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name="cod_estacion",
+            unique = true) //no puede existir más de una estación con el mismo codEstacion
     private Integer codEstacion;
+
     private LocalDate fechaSolicitudCertificacion;
     private boolean certificacionDeAdquisicion;
     private double latitud;
     private double longitud;
+
+    @Column(name="nombre", nullable = false)
     private String nombreEstacionSismologica;
+
     private Integer nroCertificacionAdquisicion;
+
+    @Transient
     private Sismografo sismografo;
 
+
     //PASO 2: Para reflejar el loop del diagrama (puede haber varios sismógrafos)
+
+    // Una estación tiene muchos sismógrafos
+    @OneToMany(mappedBy = "estacionSismologica", cascade = CascadeType.ALL)
     private List<Sismografo> sismografos = new ArrayList<>();
 
     public EstacionSismologica() { }
@@ -37,6 +56,8 @@ public class EstacionSismologica {
         }
     }
 
+    public Long getId() { return id; }
+
     public Integer getCodEstacion() { return codEstacion; }
     public void setCodEstacion(Integer codEstacion) { this.codEstacion = codEstacion; }
 
@@ -56,6 +77,7 @@ public class EstacionSismologica {
 
     public Integer getNroCertificacionAdquisicion() { return nroCertificacionAdquisicion; }
     public void setNroCertificacionAdquisicion(Integer nroCertificacionAdquisicion) { this.nroCertificacionAdquisicion = nroCertificacionAdquisicion; }
+
 
     //Devuelve el sismógrafo ‘principal’ de la estación
     public Sismografo getSismografo() { return sismografo; }
