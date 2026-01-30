@@ -45,6 +45,11 @@ public class MotivoFueraDeServicio {
         this.motivoTipo = motivoTipo;
     }
 
-    //Ver new()
+    public CambioEstado getCambioEstado() {
+        return cambioEstado;
+    }
 
+    public void setCambioEstado(CambioEstado cambioEstado) {
+        this.cambioEstado = cambioEstado;
+    }
 }

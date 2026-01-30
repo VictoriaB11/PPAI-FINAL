@@ -52,9 +52,6 @@ public class Sismografo {
         this.fechaAdquisicion = fechaAdquisicion;
         this.identificadorSismografo = identificadorSismografo;
         this.nroSerie = nroSerie;
-        //por la persistencia el chat dice que no van, por las lo comento
-        //this.historialEstados = historialEstados;
-        //this.ultimoCambioEstado = buscarUltimoCambioEstado(); //ns si va
     }
 
     // Metodo 2 del patrón
@@ -68,7 +65,7 @@ public class Sismografo {
         // Validamos que tengamos un estado actual cargado
         if (this.ultimoCambioEstado != null && this.ultimoCambioEstado.getEstado() != null) {
 
-            // DELEGACIÓN: El sismógrafo le dice a su estado "encárgate tú"
+            // El sismografo le delega a su espado la logica del cambio de estado
             this.ultimoCambioEstado.getEstado().ponerEnReparacion(
                     this,               // Le pasamos el contexto (el sismógrafo mismo)
                     fechaHoraActual,

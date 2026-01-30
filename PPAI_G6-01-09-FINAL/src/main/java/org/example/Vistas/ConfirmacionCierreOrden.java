@@ -1,20 +1,33 @@
 package org.example.Vistas;
 
 import org.example.Gestores.GestorRI;
+import org.example.Modelos.Empleado;
 import org.example.Modelos.EstacionSismologica;
 import org.example.Modelos.Estado;
 import org.example.Modelos.Sismografo;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class ConfirmacionCierreOrden extends JFrame {
 
+    // Componentes UI
     private JPanel panelPrincipal;
     private JButton btnConfirmar;
-    private JButton btnCancelar;
+    private JButton btnVolver;
+
+    // Barra Superior
+    private JPanel panelTop;
+    private JLabel lblUsuario;
+    private JLabel lblFechaHora;
+    private Timer timerReloj;
+
+    // Lógica
     private GestorRI gestor;
     private List<Estado> listaDeEstados;
 
@@ -23,83 +36,298 @@ public class ConfirmacionCierreOrden extends JFrame {
         this.listaDeEstados = listaDeEstados;
 
         setTitle("Confirmar Cierre de Orden");
-        setSize(400, 200);
-        setContentPane(panelPrincipal);
-        setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setVisible(true);
+
+        panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setOpaque(false);
+        setContentPane(crearFondoConImagen(panelPrincipal));
+
+        construirBarraSuperior();
+        construirContenidoCentral();
+        iniciarReloj();
+
         gestor.registrarVentana(this);
 
-        //  Delegamos al método del diagrama
-        btnConfirmar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pedirConfirmacionParaCerrarOrdenDeInspeccion();
-            }
+        // Listeners
+        btnConfirmar.addActionListener(e -> pedirConfirmacionParaCerrarOrdenDeInspeccion());
+
+        btnVolver.addActionListener(e -> {
+            gestor.finCU();
+            dispose();
         });
 
-        btnCancelar.addActionListener(e -> gestor.finCU());
-
-
+        pack();
+        setSize(new Dimension(900, 550));
+        setMinimumSize(new Dimension(800, 500));
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
+
+    /* ================= BARRA SUPERIOR ================= */
+
+    private void construirBarraSuperior() {
+        panelTop = new JPanel(new BorderLayout());
+        panelTop.setOpaque(false);
+        panelTop.setBorder(new EmptyBorder(12, 16, 10, 16));
+
+        btnVolver = new JButton("←");
+        btnVolver.setFont(btnVolver.getFont().deriveFont(Font.BOLD, 20f));
+        btnVolver.setFocusPainted(false);
+        btnVolver.setBorderPainted(false);
+        btnVolver.setContentAreaFilled(false);
+        btnVolver.setForeground(Color.WHITE);
+        btnVolver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnVolver.setToolTipText("Cancelar y volver al menú");
+
+        String nombreMostrar = "Responsable";
+        try {
+            Empleado empleado = gestor.buscarEmpleadoLogueado();
+            if (empleado != null) {
+                nombreMostrar = empleado.getNombre() + " " + empleado.getApellido();
+            }
+        } catch (Exception e) {
+            // Ignorar
+        }
+
+        lblUsuario = new JLabel("👤 " + nombreMostrar);
+        lblUsuario.setFont(lblUsuario.getFont().deriveFont(Font.BOLD, 14f));
+        lblUsuario.setForeground(Color.WHITE);
+
+        JPanel panelIzq = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelIzq.setOpaque(false);
+        panelIzq.add(btnVolver);
+        panelIzq.add(lblUsuario);
+
+        lblFechaHora = new JLabel();
+        lblFechaHora.setFont(lblFechaHora.getFont().deriveFont(Font.PLAIN, 14f));
+        lblFechaHora.setForeground(Color.WHITE);
+
+        panelTop.add(panelIzq, BorderLayout.WEST);
+        panelTop.add(lblFechaHora, BorderLayout.EAST);
+
+        panelPrincipal.add(panelTop, BorderLayout.NORTH);
+    }
+
+    /* ================= CONTENIDO CENTRAL ================= */
+
+    private void construirContenidoCentral() {
+        JPanel panelCenter = new JPanel(new GridBagLayout());
+        panelCenter.setOpaque(false);
+        panelCenter.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        RoundedPanel card = new RoundedPanel(24, new Color(20, 90, 160, 160));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(new EmptyBorder(26, 34, 26, 34));
+
+        JLabel lblTitulo = new JLabel("Confirmación Final");
+        lblTitulo.setFont(lblTitulo.getFont().deriveFont(Font.BOLD, 24f));
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblPaso = new JLabel("Paso 4 de 4");
+        lblPaso.setFont(lblPaso.getFont().deriveFont(Font.PLAIN, 13f));
+        lblPaso.setForeground(new Color(255, 255, 255, 220));
+        lblPaso.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblMensaje = new JLabel("<html><center>¿Está segura/o de que desea cerrar la orden de inspección<br>y actualizar el estado del sismógrafo?</center></html>");
+        lblMensaje.setFont(lblMensaje.getFont().deriveFont(Font.PLAIN, 16f));
+        lblMensaje.setForeground(Color.WHITE);
+        lblMensaje.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        btnConfirmar = new JButton("Confirmar Cierre");
+        btnConfirmar.setFocusPainted(false);
+        btnConfirmar.setBackground(new Color(255, 255, 255));
+        btnConfirmar.setForeground(new Color(20, 90, 160));
+        btnConfirmar.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnConfirmar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnConfirmar.setMaximumSize(new Dimension(200, 40));
+
+        card.add(lblTitulo);
+        card.add(Box.createVerticalStrut(6));
+        card.add(lblPaso);
+        card.add(Box.createVerticalStrut(30));
+        card.add(lblMensaje);
+        card.add(Box.createVerticalStrut(30));
+        card.add(btnConfirmar);
+
+        panelCenter.add(card);
+        panelPrincipal.add(panelCenter, BorderLayout.CENTER);
+    }
+
+    /* ================= LÓGICA DE NEGOCIO ================= */
 
     // Paso 8: Solicita confirmación
     public void pedirConfirmacionParaCerrarOrdenDeInspeccion() {
-        // Configura los textos para los botones
-
-        UIManager.put("OptionPane.yesButtonText", "Sí");
-        UIManager.put("OptionPane.noButtonText", "No");
-
-        // Muestra un mensaje para confirmar si el usuario desea cerrar la orden
-        int opcion = JOptionPane.showConfirmDialog(
-                this,
-                "¿Está segura/o de que desea cerrar la orden de inspección?",
-                "Confirmar cierre",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        // Si el usuario selecciona "No", se cancela el cierre y se registra en consola
-        if (opcion != JOptionPane.YES_OPTION) {
-            System.out.println("[Paso 8] Usuario canceló el cierre de la orden.");
-            return;
-        }
-        // Si el usuario confirma, se procede al paso siguiente: ejecutar el cierre
+        // Como esta pantalla YA ES la confirmación final (Paso 4),
+        // eliminamos el JOptionPane redundante y procedemos directamente.
         tomarConfirmacionParaCerrarOrdenDeInspeccion();
     }
 
     // Paso 9: Ejecuta el cierre
     public void tomarConfirmacionParaCerrarOrdenDeInspeccion() {
-        // Invoca al gestor para validar y ejecutar el cierre de la orden
-        boolean exito = gestor.tomarConfirmacionParaCerrarOrdenDeInspeccion(listaDeEstados);
+        try {
+            boolean exito = gestor.tomarConfirmacionParaCerrarOrdenDeInspeccion(listaDeEstados);
 
-        if (exito) {
-            // Obtiene el estado final de la orden de inspección
-            String estadoOrden = gestor.getOrdenSeleccionada().getEstado().getNombre();
-            // Obtiene el estado final del sismógrafo asociado a la estación sismológica
+            if (exito) {
+                String estadoOrden = gestor.getOrdenSeleccionada().getEstado().getNombre();
 
-            EstacionSismologica estacion = gestor.getOrdenSeleccionada().getEstacionSismologica();
-            Sismografo sism = gestor.buscarSismografoPorEstacion(estacion);
+                EstacionSismologica estacion = gestor.getOrdenSeleccionada().getEstacionSismologica();
+                Sismografo sism = gestor.buscarSismografoPorEstacion(estacion);
 
-            String estadoSismografo =
-                    (sism != null && sism.getEstadoActual() != null && sism.getEstadoActual().getEstado() != null)
-                            ? sism.getEstadoActual().getEstado().getNombre()
-                            : "(sin estado)";
+                String estadoSismografo =
+                        (sism != null && sism.getEstadoActual() != null && sism.getEstadoActual().getEstado() != null)
+                                ? sism.getEstadoActual().getEstado().getNombre()
+                                : "(sin estado)";
 
-            // Muestra un mensaje de confirmación con los estados finales
+                String mensajeExito = "Orden cerrada correctamente.\n\n" +
+                        "Estado final de la Orden: " + estadoOrden + "\n" +
+                        "Estado final del Sismógrafo: " + estadoSismografo;
 
-            JOptionPane.showMessageDialog(
-                    null,
-                    " Orden cerrada correctamente.\n\n" +
-                            "Estado final de la Orden: " + estadoOrden + "\n" +
-                            "Estado final del Sismógrafo: " + estadoSismografo,
-                    "Confirmación Final",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            // Finaliza el caso de uso
-            gestor.finCU();
-        } else {
-            // Si la validación falla, se informa al usuario que no se pudo cerrar la orden
-            JOptionPane.showMessageDialog(null, " No se pudo cerrar la orden. Revisá los datos.");
+                // MOSTRAR AVISO ESTILIZADO EN LUGAR DE JOPTIONPANE
+                mostrarAvisoFinal("¡Éxito!", mensajeExito, true);
+
+            } else {
+                mostrarAvisoFinal("Atención", "No se pudo cerrar la orden. Verifique los datos.", false);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAvisoFinal("Error Técnico", "Ocurrió un error: " + e.getMessage(), false);
+        }
+    }
+
+    /* ================= AVISO FINAL ESTILIZADO ================= */
+
+    private void mostrarAvisoFinal(String titulo, String mensaje, boolean cerrarAlFinalizar) {
+        JDialog dialog = new JDialog(this, titulo, true); // Modal
+        dialog.setUndecorated(true); // Sin bordes del sistema operativo
+
+        JPanel panelBase = new JPanel(new BorderLayout());
+        panelBase.setOpaque(false);
+        // Reutilizamos el fondo de imagen
+        dialog.setContentPane(crearFondoConImagen(panelBase));
+
+        JPanel panelCenter = new JPanel(new GridBagLayout());
+        panelCenter.setOpaque(false);
+
+        // Tarjeta pequeña
+        RoundedPanel card = new RoundedPanel(20, new Color(20, 90, 160, 190));
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(new EmptyBorder(20, 30, 20, 30));
+
+        JLabel lblTit = new JLabel(titulo);
+        lblTit.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTit.setForeground(Color.WHITE);
+        lblTit.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JTextArea txtMsg = new JTextArea(mensaje);
+        txtMsg.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtMsg.setForeground(Color.WHITE);
+        txtMsg.setOpaque(false);
+        txtMsg.setEditable(false);
+        txtMsg.setLineWrap(true);
+        txtMsg.setWrapStyleWord(true);
+        txtMsg.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Tamaño fijo para el área de texto
+        txtMsg.setPreferredSize(new Dimension(350, 100));
+
+        JButton btnOk = new JButton("Aceptar");
+        btnOk.setFocusPainted(false);
+        btnOk.setBackground(Color.WHITE);
+        btnOk.setForeground(new Color(20, 90, 160));
+        btnOk.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnOk.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnOk.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnOk.addActionListener(e -> {
+            dialog.dispose();
+            if (cerrarAlFinalizar) {
+                gestor.finCU();
+                dispose(); // Cierra la ventana principal
+            }
+        });
+
+        card.add(lblTit);
+        card.add(Box.createVerticalStrut(15));
+        card.add(txtMsg);
+        card.add(Box.createVerticalStrut(20));
+        card.add(btnOk);
+
+        panelCenter.add(card);
+        panelBase.add(panelCenter, BorderLayout.CENTER);
+
+        dialog.setSize(500, 350);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    /* ================= FONDO Y UTILIDADES ================= */
+
+    private JPanel crearFondoConImagen(JPanel contenido) {
+        java.net.URL url = getClass().getResource("/img/fondo_sismico.jpg");
+        if (url == null) {
+            JPanel fallback = new JPanel(new BorderLayout());
+            fallback.setBackground(new Color(20, 30, 50));
+            fallback.add(contenido, BorderLayout.CENTER);
+            return fallback;
+        }
+        ImageIcon icon = new ImageIcon(url);
+        return new BackgroundImagePanel(icon.getImage(), new Color(0, 0, 0, 140), contenido);
+    }
+
+    private void iniciarReloj() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        lblFechaHora.setText(LocalDateTime.now().format(fmt));
+        timerReloj = new Timer(1000, e -> lblFechaHora.setText(LocalDateTime.now().format(fmt)));
+        timerReloj.start();
+    }
+
+    /* ================= CLASES AUXILIARES ================= */
+
+    private static class RoundedPanel extends JPanel {
+        private final int radius;
+        private final Color color;
+
+        public RoundedPanel(int radius, Color color) {
+            this.radius = radius;
+            this.color = color;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Shape round = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), radius, radius);
+            g2.setColor(color);
+            g2.fill(round);
+            g2.setColor(new Color(255, 255, 255, 80));
+            g2.draw(round);
+            g2.dispose();
+        }
+    }
+
+    private static class BackgroundImagePanel extends JPanel {
+        private final Image image;
+        private final Color overlay;
+        private final JPanel content;
+
+        public BackgroundImagePanel(Image image, Color overlay, JPanel content) {
+            this.image = image;
+            this.overlay = overlay;
+            this.content = content;
+            setLayout(new BorderLayout());
+            add(content, BorderLayout.CENTER);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+            g2.setColor(overlay);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
         }
     }
 }

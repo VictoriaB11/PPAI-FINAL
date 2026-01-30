@@ -61,11 +61,4 @@ public class Estado {
         return "Completamente Realizada".equalsIgnoreCase(nombre);
     }
 
-    public boolean esAmbitoSismografo() {
-        return "Sismografo".equalsIgnoreCase(ambito);
-    }
-
-    public boolean esFueraDeServicio() {
-        return "Fuera de Servicio".equalsIgnoreCase(nombre);
-    }
 }

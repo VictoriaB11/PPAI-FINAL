@@ -105,6 +105,7 @@ public class GestorRI {
             Empleado emp = buscarEmpleadoLogueado();
             EntityManager em = JPAUtil.getEntityManager();
             try {
+
                 return em.createQuery(
                                 "SELECT o " +
                                         "FROM OrdenDeInspeccion o " +
@@ -117,8 +118,8 @@ public class GestorRI {
                                 OrdenDeInspeccion.class
                         )
                         .setParameter("emp", emp)
-                        .setParameter("ambito", "Orden de Inspección")  // o el string que uses
-                        .setParameter("nombre", "Completamente Realizada") // idem
+                        .setParameter("ambito", "Orden de Inspeccion")
+                        .setParameter("nombre", "Completamente Realizada")
                         .getResultList();
 
             } finally {
@@ -188,8 +189,9 @@ public class GestorRI {
 
     //Paso 6: obtener los tipos de motivos disponibles
     public List<MotivoTipo> buscarTiposDeMotivos() {
-        var em = JPAUtil.getEntityManager();
+        EntityManager em = JPAUtil.getEntityManager();
         try {
+            // Consulta JPA para traer todos los motivos cargados en el Main
             return em.createQuery("SELECT m FROM MotivoTipo m", MotivoTipo.class).getResultList();
         } finally {
             em.close();
@@ -243,12 +245,11 @@ public class GestorRI {
             throw new IllegalStateException("No se encontró sismógrafo para estación: " + estacion.getNombre());
         }
 
-        // Esto sigue igual, solo que ahora NO vuelvas a buscarlo dentro
-        cambiarEstadoSismografo(); // (si querés, después lo refactorizamos para que use sismografo ya hallado)
+        //Le pasamos el sismógrafo encontrado al metodo
+        cambiarEstadoSismografo();
 
-        //Persistencia real
+//Persistencia real
         guardarCierreEnBD(ordenSeleccionada, sismografo);
-
         return true;
     }
 
@@ -257,6 +258,7 @@ public class GestorRI {
 
     // El metodo validarExistenciaObservaciones() verifica si la orden seleccionada
     // tiene una observación de cierre válida y que está no sea nula ni esté vacía.
+
     public boolean validarExistenciaObservaciones() {
         return ordenSeleccionada != null
                 && ordenSeleccionada.getObservacionCierre() != null
@@ -285,7 +287,6 @@ public class GestorRI {
     // Tenga el nombre "Cerrado" (estado.esCerrada())
     private Estado buscarEstadoCerradaOrdenInspeccion(List<Estado> todosLosEstados) {
         for (Estado estado : todosLosEstados) {
-            // Usamos los métodos que ya tienes en la clase Estado
             if (estado.esAmbitoOrdenDeInspeccion() && estado.esCerrada()) {
                 return estado;
             }
@@ -305,11 +306,22 @@ public class GestorRI {
         }
     }
 
-    //Método 1 y de enganche del patrón
+    //Metodo 1 y de enganche del patrón
     // Busca y devuelve el Estado "Fuera de Servicio" del ámbito Sismógrafo.
 // Devuelve null si no se encuentra o si la lista de estados no está inicializada.
     private EstadoSismografo buscarEstadoFueraDeServicioParaSismografo() {
-        if (this.estadosDisponibles == null) return null;
+        // Si la lista en memoria es nula o vacía, la cargamos desde la BD
+        if (this.estadosDisponibles == null || this.estadosDisponibles.isEmpty()) {
+            EntityManager em = JPAUtil.getEntityManager();
+            try {
+                // Traemos todos los estados de sismógrafo (Inhabilitado, FueraDeServicio, etc.)
+                this.estadosDisponibles = em.createQuery("SELECT e FROM EstadoSismografo e", EstadoSismografo.class).getResultList();
+            } finally {
+                em.close();
+            }
+        }
+
+        // Ahora sí buscamos en la lista cargada
         for (EstadoSismografo estadoSismografo : this.estadosDisponibles) {
             if (estadoSismografo != null && estadoSismografo.esAmbitoSismografo() && estadoSismografo.esFueraDeServicio()) {
                 return estadoSismografo;
@@ -319,8 +331,29 @@ public class GestorRI {
     }
 
     public Sismografo buscarSismografoPorEstacion(EstacionSismologica estacion) {
+        // Cargamos los sismógrafos de la BD si no están cargados
+        if (sismografosDisponibles == null || sismografosDisponibles.isEmpty()) {
+            EntityManager em = JPAUtil.getEntityManager();
+            try {
+                // CORRECCIÓN 1: Agregamos JOIN FETCH s.estacionSismologica
+                // Esto asegura que el sismógrafo traiga su estación cargada y no sea un proxy vacío.
+                sismografosDisponibles = em.createQuery(
+                        "SELECT s FROM Sismografo s " +
+                                "LEFT JOIN FETCH s.historialEstados " +
+                                "JOIN FETCH s.estacionSismologica",
+                        Sismografo.class).getResultList();
+            } finally {
+                em.close();
+            }
+        }
+
+        // CORRECCIÓN 2: Comparación por ID
+        // Comparamos los IDs (Long) en lugar de los objetos completos para evitar problemas de referencias.
         for (Sismografo sismografo : sismografosDisponibles) {
-            if (sismografo.esDeMiEstacion(estacion)) { // Usamos el método delegado que creamos en Sismografo
+            Long idEstacionDelSismografo = sismografo.getEstacionSismologica().getId();
+            Long idEstacionBuscada = estacion.getId();
+
+            if (idEstacionDelSismografo.equals(idEstacionBuscada)) {
                 return sismografo;
             }
         }
@@ -358,8 +391,6 @@ public class GestorRI {
         }
 
         // 5. Llamar al sismógrafo
-        // NOTA: NO le pasamos 'estadoFS' porque la firma del diagrama no lo incluye.
-        // El sismógrafo delegará a su estado actual, y ese estado hará 'new FueraDeServicio()'.
         sismografo.ponerEnReparacion(fechaHoraActual, listaMotivos, RILogueado);
     }
 
@@ -367,9 +398,19 @@ public class GestorRI {
 
     //Paso 13: Buscar los mails de los responsables
     public void buscarMailsResponsablesDeReparaciones() {
-        for (Empleado e : empleados) {  // Nos dirigimos a la clase empleado para saber si es un responsable de reparacion
+        //Cargar empleados desde la BD antes de filtrar
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            // Traemos los empleados y sus roles para evitar LazyInitializationException
+            this.empleados = em.createQuery("SELECT e FROM Empleado e JOIN FETCH e.rol", Empleado.class).getResultList();
+        } finally {
+            em.close();
+        }
+
+        // Filtramos en memoria
+        for (Empleado e : empleados) {
             if (e.esResponsableDeReparacion()) {
-                mailsResponsablesDeReparaciones.add(e.obtenerMail()); // Si el empleado es un responsable en reparacion obtenemos el mail
+                mailsResponsablesDeReparaciones.add(e.obtenerMail());
             }
         }
     }
@@ -449,7 +490,7 @@ public class GestorRI {
     }
 
     //para persistencia
-    // NUEVO MÉTODO: Buscar los estados correspondientes a Órdenes (tabla estado_orden)
+    // NUEVO METODO: Buscar los estados correspondientes a Órdenes (tabla estado_orden)
     public List<Estado> buscarEstadosOrden() {
         EntityManager em = JPAUtil.getEntityManager();
         try {

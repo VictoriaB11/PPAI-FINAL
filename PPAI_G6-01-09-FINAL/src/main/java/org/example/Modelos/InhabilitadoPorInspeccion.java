@@ -51,6 +51,11 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
         // -------------------------------------------------------
         // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
         CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstadoSismografo, fechaHoraActual, motivos, RILogueado);
+        if (motivos != null) {
+            for (MotivoFueraDeServicio motivo : motivos) {
+                motivo.setCambioEstado(nuevoCambio);
+            }
+        }
         nuevoCambio.crearMotivosFueraDeServicio(motivos);
 
         // -------------------------------------------------------

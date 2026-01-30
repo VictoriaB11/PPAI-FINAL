@@ -31,8 +31,6 @@ public class EstacionSismologica {
     private Sismografo sismografo;
 
 
-    //PASO 2: Para reflejar el loop del diagrama (puede haber varios sismógrafos)
-
     // Una estación tiene muchos sismógrafos
     @OneToMany(mappedBy = "estacionSismologica", cascade = CascadeType.ALL)
     private List<Sismografo> sismografos = new ArrayList<>();

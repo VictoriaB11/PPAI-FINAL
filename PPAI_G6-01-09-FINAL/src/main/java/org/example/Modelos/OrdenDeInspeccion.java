@@ -40,7 +40,7 @@ public class OrdenDeInspeccion {
     public OrdenDeInspeccion() {
     }
 
-    public OrdenDeInspeccion(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraCierre, LocalDateTime fechaHoraFinalizacion, Integer numeroDeOrden, String observacionCierre, Empleado empleado, EstadoSismografo estadoSismografo, EstacionSismologica estacionSismologica) {
+    public OrdenDeInspeccion(LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraCierre, LocalDateTime fechaHoraFinalizacion, Integer numeroDeOrden, String observacionCierre, Empleado empleado, Estado estado, EstacionSismologica estacionSismologica) {
         this.fechaHoraCierre = fechaHoraCierre;
         this.fechaFinalizacion = fechaHoraFinalizacion;
         this.numeroDeOrden = numeroDeOrden;
