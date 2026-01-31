@@ -3,6 +3,7 @@ package org.example.Modelos;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @DiscriminatorValue("FueraDeServicio")
@@ -15,7 +16,7 @@ public class FueraDeServicio extends EstadoSismografo {
     @Override
     public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
                                           LocalDateTime fechaHoraInicio,
-                                          List<MotivoFueraDeServicio> motivos,
+                                          Map<MotivoTipo, String> motivos,
                                           Empleado RILogueado) {
         CambioEstado nuevoCambio = new CambioEstado();
         nuevoCambio.setEstado(crearProximoEstado());
@@ -42,7 +43,7 @@ public class FueraDeServicio extends EstadoSismografo {
     public void ponerEnReparacion(Sismografo sismografo,
                                   java.time.LocalDateTime fecha,
                                   java.util.List<CambioEstado> cambios,
-                                  java.util.List<MotivoFueraDeServicio> motivos,
+                                  Map<MotivoTipo, String> motivos,
                                   Empleado responsable) {
         // No se puede poner en reparación algo que ya está fuera de servicio (o depende de tu regla de negocio)
         throw new RuntimeException("El sismógrafo ya se encuentra Fuera de Servicio.");

@@ -3,6 +3,8 @@ package org.example.Modelos;
 import java.time.LocalDateTime;
 //import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.persistence.*;
 
 /**
@@ -23,7 +25,7 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
     public void ponerEnReparacion(Sismografo sismografo,
                                   LocalDateTime fechaHoraActual,
                                   List<CambioEstado> historialCambioEstado,
-                                  List<MotivoFueraDeServicio> motivos,
+                                  Map<MotivoTipo, String> motivos,
                                   Empleado RILogueado) {
 
         // -------------------------------------------------------
@@ -51,11 +53,6 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
         // -------------------------------------------------------
         // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
         CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstadoSismografo, fechaHoraActual, motivos, RILogueado);
-        if (motivos != null) {
-            for (MotivoFueraDeServicio motivo : motivos) {
-                motivo.setCambioEstado(nuevoCambio);
-            }
-        }
         nuevoCambio.crearMotivosFueraDeServicio(motivos);
 
         // -------------------------------------------------------
@@ -99,10 +96,10 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
    @Override
    public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
                                          LocalDateTime fechaHoraInicio,
-                                         List<MotivoFueraDeServicio> motivos,
+                                         Map<MotivoTipo, String> motivos,
                                          Empleado RILogueado) {
-        // Metodo 10 del patron
-        // Aquí se realiza el 'new' encapsulado
-        return new CambioEstado(proximoEstadoSismografo, fechaHoraInicio, motivos, RILogueado);}
+
+       return new CambioEstado(proximoEstadoSismografo, fechaHoraInicio, RILogueado);
+   }
 
 }

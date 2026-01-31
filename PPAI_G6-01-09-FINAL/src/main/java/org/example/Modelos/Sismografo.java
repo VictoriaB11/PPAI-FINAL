@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "sismografo")
@@ -56,7 +57,7 @@ public class Sismografo {
 
     // Metodo 2 del patrón
     public void ponerEnReparacion(LocalDateTime fechaHoraActual,
-                                  List<MotivoFueraDeServicio> motivos,
+                                  Map<MotivoTipo, String> motivos,
                                   Empleado RILogueado) {
 
         // Recalculamos el estado actual desde el historial persistido

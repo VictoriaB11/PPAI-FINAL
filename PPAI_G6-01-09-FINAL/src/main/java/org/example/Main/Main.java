@@ -9,7 +9,7 @@ import org.example.Vistas.MenuPrincipal;
 import javax.swing.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List; // Agregado para manejar listas
+import java.util.List;
 
 public class Main {
 
@@ -50,31 +50,26 @@ public class Main {
             em.getTransaction().begin();
 
             // --- VERIFICACIÓN DE DATOS EXISTENTES ---
-            // Consultamos si ya existe la estación con código 123 para evitar el error de restricción única.
             List<EstacionSismologica> existentes = em.createQuery(
                             "SELECT e FROM EstacionSismologica e WHERE e.codEstacion = :cod", EstacionSismologica.class)
                     .setParameter("cod", 123)
                     .getResultList();
 
             if (!existentes.isEmpty()) {
-                System.out.println("=== DATOS PREVIOS DETECTADOS EN LA BD. OMITIENDO CREACIÓN. ===");
-
-                // Si ya existen datos, buscamos un usuario cualquiera para loguear (ej. el admin creado anteriormente)
+                System.out.println("=== DATOS PREVIOS DETECTADOS. OMITIENDO CREACIÓN. ===");
                 List<Usuario> usuarios = em.createQuery("SELECT u FROM Usuario u", Usuario.class).getResultList();
-
-                em.getTransaction().commit(); // Cerramos la transacción de lectura
+                em.getTransaction().commit();
 
                 if (!usuarios.isEmpty()) {
-                    return usuarios.get(0); // Devolvemos el primer usuario encontrado
+                    return usuarios.get(0);
                 } else {
-                    System.err.println("Error: Existen estaciones pero no usuarios. Por favor borra el archivo 'ppai.db' y reinicia.");
                     return null;
                 }
             }
 
             // --- SI NO EXISTEN DATOS, PROCEDEMOS A CREARLOS ---
 
-            // --- 1. Estados ---
+            // 1. Estados
             Estado estadoRealizada = new Estado("Completamente Realizada", "Orden lista", "Orden de Inspeccion");
             Estado estadoCerrada = new Estado("Cerrada", "Orden finalizada", "Orden de Inspeccion");
             em.persist(estadoRealizada);
@@ -86,7 +81,7 @@ public class Main {
             em.persist(estadoInhabilitado);
             em.persist(estadoFueraServicio);
 
-            // --- 1.5 Crear Motivos de Fuera de Servicio ---
+            // 1.5 Motivos
             MotivoTipo motivo1 = new MotivoTipo("Descalibración del sensor");
             MotivoTipo motivo2 = new MotivoTipo("Falla de batería");
             MotivoTipo motivo3 = new MotivoTipo("Daños por vandalismo");
@@ -97,27 +92,8 @@ public class Main {
             em.persist(motivo3);
             em.persist(motivo4);
 
-
-            // --- 2. Estación y Sismógrafo ---
-            EstacionSismologica estacion = new EstacionSismologica();
-            estacion.setNombre("Estacion Cordoba");
-            estacion.setCodEstacion(123);
-            estacion.setLatitud(-31.42);
-            estacion.setLongitud(-64.18);
-
-            em.persist(estacion);
-
-            Sismografo sismografo = new Sismografo();
-            sismografo.setFechaAdquisicion(LocalDate.now());
-            sismografo.setIdentificadorSismografo(999);
-            sismografo.setNroSerie(1234);
-            sismografo.setEstacionSismologica(estacion);
-
-            CambioEstado cambioInicial = new CambioEstado(estadoInhabilitado, LocalDateTime.now(), null, null);
-            sismografo.agregarCambioEstado(cambioInicial);
-            em.persist(sismografo);
-
-            // --- 3. Rol, Empleado y Usuario ---
+            // --- MOVIDO ARRIBA: 2. Rol, Empleado y Usuario ---
+            // Creamos el empleado ANTES que el sismógrafo para asignarlo como responsable del estado inicial
             Rol rol = new Rol("Tecnico", "Tecnico de mantenimiento");
             em.persist(rol);
 
@@ -127,10 +103,34 @@ public class Main {
             usuario = new Usuario("admin", "1234", empleado);
             em.persist(usuario);
 
+            // --- 3. Estación y Sismógrafo ---
+            EstacionSismologica estacion = new EstacionSismologica();
+            estacion.setNombre("Estacion Cordoba");
+            estacion.setCodEstacion(123);
+            estacion.setLatitud(-31.42);
+            estacion.setLongitud(-64.18);
+            em.persist(estacion);
+
+            Sismografo sismografo = new Sismografo();
+            sismografo.setFechaAdquisicion(LocalDate.now());
+            sismografo.setIdentificadorSismografo(999);
+            sismografo.setNroSerie(1234);
+            sismografo.setEstacionSismologica(estacion);
+
+            // CORRECCIÓN: Usamos el constructor actualizado de CambioEstado
+            //
+            CambioEstado cambioInicial = new CambioEstado(estadoInhabilitado, LocalDateTime.now(), empleado);
+
+            // Aseguramos la relación bidireccional (si agregarCambioEstado lo hace, genial, sino esto refuerza)
+            cambioInicial.setSismografo(sismografo);
+
+            sismografo.agregarCambioEstado(cambioInicial);
+            em.persist(sismografo);
+
             // --- 4. Orden de Inspección ---
             OrdenDeInspeccion orden = new OrdenDeInspeccion();
-
             orden.setNumeroDeOrden(1001);
+            // Fecha finalización ayer, para que aparezca ordenada primero
             orden.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(1));
             orden.setEstacionSismologica(estacion);
             orden.setEstado(estadoRealizada);
@@ -138,9 +138,7 @@ public class Main {
 
             em.persist(orden);
 
-            // --- DEBUG ---
             System.out.println("DEBUG MAIN: Orden creada con ID: " + orden.getId());
-            System.out.println("DEBUG MAIN:   Estado de la orden: " + orden.getEstado().getNombre());
 
             em.getTransaction().commit();
             System.out.println("=== DATOS CARGADOS CORRECTAMENTE ===");

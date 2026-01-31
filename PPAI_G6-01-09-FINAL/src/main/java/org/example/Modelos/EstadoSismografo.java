@@ -3,6 +3,8 @@ package org.example.Modelos;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.persistence.*;
 
 
@@ -65,7 +67,7 @@ public abstract class EstadoSismografo {
 
     public abstract CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
                                                    LocalDateTime fechaHoraInicio,
-                                                   List<MotivoFueraDeServicio> motivos,
+                                                   Map<MotivoTipo, String> motivos,
                                                    Empleado RILogueado);
 
 
@@ -79,6 +81,6 @@ public abstract class EstadoSismografo {
     public abstract void ponerEnReparacion(Sismografo sismografo,
                                   LocalDateTime fechaHoraInicio,
                                   List<CambioEstado> cambiosEstado,
-                                  List<MotivoFueraDeServicio> motivos,
+                                  Map<MotivoTipo, String> motivos,
                                   Empleado RILogueado);
 }

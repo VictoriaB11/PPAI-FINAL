@@ -371,27 +371,16 @@ public class GestorRI {
         if (sismografo == null) {
             throw new IllegalStateException("No se encontró el sismógrafo para la estación: " + estacion.getNombre());
         }
-        // 3. Convertir Map<MotivoTipo, String> a List<MotivoFueraDeServicio
-        // Esto es necesario porque Sismografo.ponerEnReparacion espera una Lista.
-        List<MotivoFueraDeServicio> listaMotivos = new ArrayList<>();
-        if (this.motivosYComentarios != null) {
-            for (Map.Entry<MotivoTipo, String> entry : this.motivosYComentarios.entrySet()) {
-                // Creamos el objeto MotivoFueraDeServicio con (comentario, tipo)
-                listaMotivos.add(new MotivoFueraDeServicio(entry.getValue(), entry.getKey()));
-            }
-        }
 
         // 4. EL ENGANCHE (Self-Call):
-        // Ejecutamos el metodo porque el diagrama lo exige.
-        // Esto valida que el estado exista en la lista de estados disponibles del sistema.
         EstadoSismografo estadoSismografoFS = buscarEstadoFueraDeServicioParaSismografo();
 
         if (estadoSismografoFS == null) {
             throw new IllegalStateException("Error de consistencia: No se encuentra el estado 'Fuera de Servicio' en el sistema.");
         }
 
-        // 5. Llamar al sismógrafo
-        sismografo.ponerEnReparacion(fechaHoraActual, listaMotivos, RILogueado);
+        // 5. Llamar al sismógrafo pasando el MAPA
+        sismografo.ponerEnReparacion(fechaHoraActual, this.motivosYComentarios, RILogueado);
     }
 
 

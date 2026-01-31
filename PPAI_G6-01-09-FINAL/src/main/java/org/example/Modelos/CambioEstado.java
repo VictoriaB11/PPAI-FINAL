@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "cambio_estado")
@@ -46,16 +48,19 @@ public class CambioEstado {
     public CambioEstado() {
     }
 
+    public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, Empleado RILogueado) {
+        this.estadoSismografo = estadoSismografo;
+        this.fechaHoraInicio = fechaHoraInicio;
+        this.RILogueado = RILogueado;
+        this.motivosFueraDeServicio = new ArrayList<>();
+    }
+
     public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
         this.estadoSismografo = estadoSismografo;
         this.fechaHoraInicio = fechaHoraInicio;
         this.fechaHoraFin = fechaHoraFin;
         this.motivosFueraDeServicio = motivosFueraDeServicio;
         this.RILogueado = RILogueado;
-    }
-
-    public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, List<MotivoFueraDeServicio> motivosFueraDeServicio, Empleado RILogueado) {
-        this(estadoSismografo, fechaHoraInicio, null, motivosFueraDeServicio, RILogueado);
     }
 
 
@@ -110,8 +115,27 @@ public class CambioEstado {
 
 
     //Metodo 11 del patron
-    public void crearMotivosFueraDeServicio(List<MotivoFueraDeServicio> motivos) {
-        this.motivosFueraDeServicio = motivos;
+    public void crearMotivosFueraDeServicio(Map<MotivoTipo, String> motivosYComentarios) {
+        // Inicializamos la lista si es nula
+        if (this.motivosFueraDeServicio == null) {
+            this.motivosFueraDeServicio = new ArrayList<>();
+        }
+
+        if (motivosYComentarios != null) {
+            for (Map.Entry<MotivoTipo, String> entry : motivosYComentarios.entrySet()) {
+                MotivoTipo tipo = entry.getKey();
+                String comentario = entry.getValue();
+
+                // hacemos el new
+                MotivoFueraDeServicio nuevoMotivo = new MotivoFueraDeServicio(comentario, tipo);
+
+                // Asignamos la relación bidireccional (importante para JPA)
+                nuevoMotivo.setCambioEstado(this);
+
+                // Agregamos a la lista
+                this.motivosFueraDeServicio.add(nuevoMotivo);
+            }
+        }
     }
 
 
