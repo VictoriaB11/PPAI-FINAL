@@ -10,20 +10,26 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import javax.swing.Timer; // Import correcto del Timer
+import java.util.Map;
 
 public class SeleccionMotivosYComentarios extends JFrame {
 
+    // Componentes UI
     private JPanel panelPrincipal;
     private JButton btnConfirmar;
-    private JButton btnVolver;
+    private JButton btnVolver; // Reemplaza a cancelar para volver atrás
+    private JPanel contenedorLista; // Panel interno para el scroll
+
+    // Componentes Barra Superior
     private JPanel panelTop;
     private JLabel lblUsuario;
     private JLabel lblFechaHora;
     private Timer timerReloj;
 
+    // Estructuras de datos
     private List<JCheckBox> checkBoxes;
     private Map<MotivoTipo, JTextField> camposTexto;
 
@@ -36,13 +42,16 @@ public class SeleccionMotivosYComentarios extends JFrame {
         this.checkBoxes = new ArrayList<>();
         this.camposTexto = new HashMap<>();
 
+        // Configuración Ventana
         setTitle("Seleccionar Motivos y Cargar Comentarios");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        // Setup Panel Principal y Fondo
         panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setOpaque(false);
         setContentPane(crearFondoConImagen(panelPrincipal));
 
+        // Construcción de UI
         construirBarraSuperior();
         construirContenidoCentral();
         iniciarReloj();
@@ -52,16 +61,112 @@ public class SeleccionMotivosYComentarios extends JFrame {
         mostrarMotivosTiposParaSeleccion(motivosDisponibles);
         pedirMotivosTipoParaSeleccionYComentario();
 
-        btnConfirmar.addActionListener(e -> onConfirmar());
+        // Listeners
+        btnConfirmar.addActionListener(e -> confirmarSeleccion());
         btnVolver.addActionListener(e -> volverAtras());
 
+        // Ajustes finales
         pack();
         setSize(new Dimension(900, 600));
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null);
     }
 
+    /* ================= MÉTODOS DEL DIAGRAMA ================= */
+
+    // Paso 6: mostrar motivos en la interfaz.
+    public void mostrarMotivosTiposParaSeleccion(List<MotivoTipo> motivos) {
+        contenedorLista.removeAll();
+        checkBoxes.clear();
+        camposTexto.clear();
+
+        for (MotivoTipo motivo : motivos) {
+            // Usamos un método auxiliar para crear la fila con estilo, pero la lógica es la misma
+            JPanel fila = crearFilaMotivo(motivo);
+            contenedorLista.add(fila);
+            contenedorLista.add(Box.createVerticalStrut(10)); // Espacio entre filas
+        }
+
+        contenedorLista.revalidate();
+        contenedorLista.repaint();
+    }
+
+    // Paso 6: mostrar la ventana de selección.
+    public void pedirMotivosTipoParaSeleccionYComentario() {
+        setVisible(true);
+    }
+
+    // Paso 7-a: el usuario (RI) realiza la selección de motivos en la interfaz.
+    public void tomarSeleccionMotivosTipos(List<MotivoTipo> seleccionados) {
+        gestor.tomarSeleccionMotivosTipos(seleccionados);
+    }
+
+    // Paso 7-b: el usuario (RI) ingresa comentarios para los motivos seleccionados.
+    public void tomarIngresoComentarioMotivo(Map<MotivoTipo, String> comentarios) {
+        gestor.tomarIngresoComentarioMotivo(comentarios);
+    }
+
+    /* ================= LÓGICA DE CONFIRMACIÓN ================= */
+
+    private void confirmarSeleccion() {
+        Map<MotivoTipo, String> motivosYComentarios = new HashMap<>();
+        boolean algunComentarioVacio = false;
+        boolean comentarioSinSeleccion = false;
+
+        // Iteramos sobre los checkboxes guardados
+        for (JCheckBox checkBox : checkBoxes) {
+            MotivoTipo motivo = (MotivoTipo) checkBox.getClientProperty("motivo");
+            JTextField campo = camposTexto.get(motivo);
+            String comentario = campo.getText();
+
+            if (checkBox.isSelected()) {
+                if (comentario == null || comentario.trim().isEmpty()) {
+                    algunComentarioVacio = true;
+                } else {
+                    motivosYComentarios.put(motivo, comentario.trim());
+                }
+            } else {
+                // Validación: Si no está seleccionado pero tiene texto
+                if (comentario != null && !comentario.trim().isEmpty()) {
+                    comentarioSinSeleccion = true;
+                }
+            }
+        }
+
+        // Validaciones
+        if (motivosYComentarios.isEmpty() && !algunComentarioVacio) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar al menos un motivo.", "Validación", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (algunComentarioVacio) {
+            JOptionPane.showMessageDialog(this, "Debe ingresar un comentario para CADA motivo seleccionado.", "Validación", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (comentarioSinSeleccion) {
+            JOptionPane.showMessageDialog(this, "No puede ingresar comentarios en motivos que no fueron seleccionados.", "Validación", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Paso 7: Llamadas a los métodos puente
+        List<MotivoTipo> seleccionados = new ArrayList<>(motivosYComentarios.keySet());
+
+        tomarSeleccionMotivosTipos(seleccionados);
+        tomarIngresoComentarioMotivo(motivosYComentarios);
+
+        // Avanzar al siguiente paso (Confirmación)
+        new ConfirmacionCierreOrden(gestor, gestor.buscarEstadosOrden());
+        dispose();
+    }
+
+    private void volverAtras() {
+        gestor.finCU();
+        dispose();
+    }
+
     /* ================= BARRA SUPERIOR ================= */
+
     private void construirBarraSuperior() {
         panelTop = new JPanel(new BorderLayout());
         panelTop.setOpaque(false);
@@ -74,7 +179,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         btnVolver.setContentAreaFilled(false);
         btnVolver.setForeground(Color.WHITE);
         btnVolver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnVolver.setToolTipText("Volver al paso anterior");
+        btnVolver.setToolTipText("Cancelar y Salir");
 
         String nombreMostrar = "Responsable";
         try {
@@ -82,7 +187,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
             if (empleado != null) {
                 nombreMostrar = empleado.getNombre() + " " + empleado.getApellido();
             }
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
 
         lblUsuario = new JLabel("👤 " + nombreMostrar);
         lblUsuario.setFont(lblUsuario.getFont().deriveFont(Font.BOLD, 14f));
@@ -99,12 +204,10 @@ public class SeleccionMotivosYComentarios extends JFrame {
 
         panelTop.add(panelIzq, BorderLayout.WEST);
         panelTop.add(lblFechaHora, BorderLayout.EAST);
-
         panelPrincipal.add(panelTop, BorderLayout.NORTH);
     }
 
-    /* ================= UI CENTER ================= */
-    private JPanel contenedorLista;
+    /* ================= CONTENIDO CENTRAL ================= */
 
     private void construirContenidoCentral() {
         JPanel panelCenter = new JPanel(new GridBagLayout());
@@ -115,6 +218,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(22, 26, 18, 26));
 
+        // Header de la tarjeta
         JPanel header = new JPanel();
         header.setOpaque(false);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -140,6 +244,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         header.add(Box.createVerticalStrut(15));
         header.add(hint);
 
+        // Contenedor de la lista (Scroll)
         contenedorLista = new JPanel();
         contenedorLista.setOpaque(false);
         contenedorLista.setLayout(new BoxLayout(contenedorLista, BoxLayout.Y_AXIS));
@@ -151,6 +256,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         scroll.setBorder(BorderFactory.createEmptyBorder());
         scroll.getVerticalScrollBar().setUnitIncrement(16);
 
+        // Botón Confirmar
         btnConfirmar = new JButton("Confirmar");
         btnConfirmar.setFocusPainted(false);
         btnConfirmar.setBackground(new Color(255, 255, 255));
@@ -170,20 +276,8 @@ public class SeleccionMotivosYComentarios extends JFrame {
         panelPrincipal.add(panelCenter, BorderLayout.CENTER);
     }
 
-    public void mostrarMotivosTiposParaSeleccion(List<MotivoTipo> motivos) {
-        contenedorLista.removeAll();
-        checkBoxes.clear();
-        camposTexto.clear();
 
-        for (MotivoTipo motivo : motivos) {
-            JPanel fila = crearFilaMotivo(motivo);
-            contenedorLista.add(fila);
-            contenedorLista.add(Box.createVerticalStrut(10));
-        }
-        contenedorLista.revalidate();
-        contenedorLista.repaint();
-    }
-
+    // Metodo auxiliar para crear filas bonitas (Estética)
     private JPanel crearFilaMotivo(MotivoTipo motivo) {
         JPanel fila = new RoundedPanel(18, new Color(255, 255, 255, 30));
         fila.setLayout(new GridBagLayout());
@@ -195,19 +289,23 @@ public class SeleccionMotivosYComentarios extends JFrame {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // Checkbox
         JCheckBox checkBox = new JCheckBox(motivo.getDescripcion());
         checkBox.setOpaque(false);
         checkBox.setForeground(Color.WHITE);
         checkBox.setFont(checkBox.getFont().deriveFont(Font.BOLD, 13.5f));
-        checkBox.putClientProperty("motivo", motivo);
+        checkBox.putClientProperty("motivo", motivo); // Guardamos referencia para recuperarla luego
 
+        // TextField
         JTextField textField = new JTextField();
         textField.setColumns(22);
         textField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
+        // Guardamos referencias
         checkBoxes.add(checkBox);
         camposTexto.put(motivo, textField);
 
+        // Layout
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.45;
         fila.add(checkBox, gbc);
 
@@ -222,67 +320,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
         return fila;
     }
 
-    public void pedirMotivosTipoParaSeleccionYComentario() {
-        setVisible(true);
-    }
-
-    public void tomarSeleccionMotivosTipos(List<MotivoTipo> seleccionados) {
-        gestor.tomarSeleccionMotivosTipos(seleccionados);
-    }
-
-    public void tomarIngresoComentarioMotivo(Map<MotivoTipo, String> comentarios) {
-        gestor.tomarIngresoComentarioMotivo(comentarios);
-    }
-
-    private void onConfirmar() {
-        Map<MotivoTipo, String> motivosYComentarios = new HashMap<>();
-        boolean algunComentarioVacio = false;
-        boolean comentarioSinSeleccion = false;
-
-        for (JCheckBox checkBox : checkBoxes) {
-            MotivoTipo motivo = (MotivoTipo) checkBox.getClientProperty("motivo");
-            JTextField campo = camposTexto.get(motivo);
-            String comentario = (campo != null) ? campo.getText() : "";
-
-            if (checkBox.isSelected()) {
-                if (comentario == null || comentario.trim().isEmpty()) {
-                    algunComentarioVacio = true;
-                } else {
-                    motivosYComentarios.put(motivo, comentario.trim());
-                }
-            } else {
-                if (comentario != null && !comentario.trim().isEmpty()) {
-                    comentarioSinSeleccion = true;
-                }
-            }
-        }
-
-        if (motivosYComentarios.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe seleccionar al menos un motivo.", "Validación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (algunComentarioVacio) {
-            JOptionPane.showMessageDialog(this, "Debe ingresar un comentario para CADA motivo seleccionado.", "Validación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (comentarioSinSeleccion) {
-            JOptionPane.showMessageDialog(this, "No puede ingresar comentarios en motivos que no fueron seleccionados.", "Validación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        List<MotivoTipo> seleccionados = new ArrayList<>(motivosYComentarios.keySet());
-        tomarSeleccionMotivosTipos(seleccionados);
-        tomarIngresoComentarioMotivo(motivosYComentarios);
-
-        // CORRECCIÓN: Usamos buscarEstadosOrden() para pasar estados de Orden (List<Estado>)
-        new ConfirmacionCierreOrden(gestor, gestor.buscarEstadosOrden());
-        dispose();
-    }
-
-    private void volverAtras() {
-        gestor.finCU();
-        dispose();
-    }
+    /* ================= FONDO ================= */
 
     private JPanel crearFondoConImagen(JPanel contenido) {
         java.net.URL url = getClass().getResource("/img/fondo_sismico.jpg");
@@ -296,12 +334,16 @@ public class SeleccionMotivosYComentarios extends JFrame {
         return new BackgroundImagePanel(icon.getImage(), new Color(0, 0, 0, 140), contenido);
     }
 
+    /* ================= RELOJ ================= */
+
     private void iniciarReloj() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         lblFechaHora.setText(LocalDateTime.now().format(fmt));
         timerReloj = new Timer(1000, e -> lblFechaHora.setText(LocalDateTime.now().format(fmt)));
         timerReloj.start();
     }
+
+    /* ================= PANELES ================= */
 
     private static class RoundedPanel extends JPanel {
         private final int radius;

@@ -2,6 +2,8 @@ package org.example.Vistas;
 
 import org.example.Gestores.GestorRI;
 import org.example.Modelos.*;
+import org.example.Persistencia.JPAUtil; // Necesario para obtener las órdenes
+import jakarta.persistence.EntityManager; // Necesario para la consulta
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,6 +11,7 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MenuPrincipal extends JFrame {
@@ -123,7 +126,7 @@ public class MenuPrincipal extends JFrame {
         btnSalir.setMaximumSize(new Dimension(100, 30));
         btnSalir.setFocusPainted(false);
         btnSalir.setBackground(new Color(200, 50, 50));
-        btnSalir.setForeground(new Color(20, 90, 160));
+        btnSalir.setForeground(Color.BLUE);
 
         // Panel para alinear el botón salir a la derecha dentro de la tarjeta
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -167,7 +170,20 @@ public class MenuPrincipal extends JFrame {
 
     /* ================= ACCIONES ================= */
 
+    /**
+     * PASO 1 (Boundary): El actor presiona la opción.
+     * Este metodo reacciona al clic y delega la apertura de la ventana.
+     */
     private void opcionCerrarOrdenInspeccion() {
+        abrirVentana();
+    }
+
+    /**
+     * Inicia el proceso de cierre de la orden. Este método crea el gestor
+     * y busca los datos necesarios en un hilo separado para no congelar la interfaz,
+     * y finalmente abre la ventana de selección.
+     */
+    private void abrirVentana() {
         // Deshabilitamos botón y mostramos cursor de espera
         btnCerrarOrdenInspeccion.setEnabled(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -175,7 +191,7 @@ public class MenuPrincipal extends JFrame {
         // Usamos SwingWorker para no congelar la UI mientras consulta la BD
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             private GestorRI gestor;
-            private List<OrdenDeInspeccion> ordenes;
+            private List<OrdenDeInspeccion> ordenesFiltradas;
             private List<MotivoTipo> motivos;
             private List<EstadoSismografo> estados;
 
@@ -186,21 +202,46 @@ public class MenuPrincipal extends JFrame {
                     return null;
                 }
 
+                // --- CAMBIO IMPORTANTE ---
+                // Recuperamos TODAS las órdenes de la BD para pasárselas al Gestor.
+                // Esto simula que la Pantalla "tiene" las órdenes y se las pasa al Gestor
+                // para que él las filtre en memoria (Paso 1 y 2 del diagrama).
+                List<OrdenDeInspeccion> todasLasOrdenes = new ArrayList<>();
+                EntityManager em = JPAUtil.getEntityManager();
+                try {
+                    // Usamos JOIN FETCH para traer las relaciones necesarias y evitar LazyInitException
+                    // cuando el Gestor itere y pregunte por empleado o estado.
+                    todasLasOrdenes = em.createQuery(
+                            "SELECT o FROM OrdenDeInspeccion o " +
+                                    "JOIN FETCH o.estacionSismologica " +
+                                    "JOIN FETCH o.estado " +
+                                    "JOIN FETCH o.empleado",
+                            OrdenDeInspeccion.class
+                    ).getResultList();
+                } finally {
+                    em.close();
+                }
+
+                // 1. Crear gestor (Controller)
                 gestor = new GestorRI();
 
-                // Paso 1: iniciar CU
-                gestor.nuevoCierreOrdenInspeccion(sesionActual);
+                // 2. Iniciar el CU del lado del Gestor pasando la lista COMPLETA
+                gestor.nuevoCierreOrdenInspeccion(sesionActual, todasLasOrdenes);
 
-                // Paso 2: buscar datos necesarios
-                ordenes = gestor.buscarOrdenesDeInspeccionRealizadas();
+                // 3. El Gestor filtra en memoria y devuelve las válidas
+                ordenesFiltradas = gestor.buscarOrdenesDeInspeccionRealizadas();
+
+                // 4. Buscar datos necesarios para la siguiente pantalla
                 motivos = gestor.buscarTiposDeMotivos();
-                estados = gestor.getEstadosDisponibles(); // Nota: esto puede ser null si no se cargó antes, el gestor lo maneja
+                estados = gestor.getEstadosDisponibles();
 
                 return null;
             }
 
             @Override
             protected void done() {
+                // Este código se ejecuta cuando doInBackground() termina,
+                // volviendo al hilo de la interfaz de forma segura.
                 setCursor(Cursor.getDefaultCursor());
                 btnCerrarOrdenInspeccion.setEnabled(true);
 
@@ -209,8 +250,8 @@ public class MenuPrincipal extends JFrame {
                     return;
                 }
 
-                if (ordenes != null && !ordenes.isEmpty()) {
-                    // Abrimos la siguiente pantalla con los datos recuperados
+                // 5. Abrir la siguiente ventana si hay resultados
+                if (ordenesFiltradas != null && !ordenesFiltradas.isEmpty()) {
                     new SeleccionOrdenDeInspeccion(gestor, motivos, estados);
                 } else {
                     JOptionPane.showMessageDialog(

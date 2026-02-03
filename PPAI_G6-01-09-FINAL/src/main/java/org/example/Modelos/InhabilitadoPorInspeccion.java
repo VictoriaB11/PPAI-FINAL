@@ -28,36 +28,27 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
                                   Map<MotivoTipo, String> motivos,
                                   Empleado RILogueado) {
 
-        // -------------------------------------------------------
         // PASO A: Buscar el cambio de estado actual (SELF)
         // Diagrama: InhabilitadoPorInspeccion -> buscarCambioDeEstadoActual()
-        // -------------------------------------------------------
         CambioEstado ultimoCambio = this.buscarCambioDeEstadoActual(historialCambioEstado);
 
-        // -------------------------------------------------------
         // PASO B: Cerrar el estado anterior
         // Diagrama: ultimo:CambioEstado -> setFechaHoraFin(...)
-        // -------------------------------------------------------
         if (ultimoCambio != null) {
             ultimoCambio.setFechaHoraFin(fechaHoraActual);
         }
 
-        // -------------------------------------------------------
+
         // PASO C: Crear el próximo estado (SELF)
         // Diagrama: InhabilitadoPorInspeccion -> crearProximoEstado()
-        // -------------------------------------------------------
         EstadoSismografo proximoEstadoSismografo = this.crearProximoEstado();
 
-        // -------------------------------------------------------
         // PASO D: Crear el nuevo CambioEstado (new)
-        // -------------------------------------------------------
         // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
         CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstadoSismografo, fechaHoraActual, motivos, RILogueado);
         nuevoCambio.crearMotivosFueraDeServicio(motivos);
 
-        // -------------------------------------------------------
         // PASO E: Actualizar Sismógrafo
-        // -------------------------------------------------------
         if (sismografo.getHistorialEstados() != null) {
             sismografo.getHistorialEstados().add(nuevoCambio);
         }
@@ -65,10 +56,7 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
         sismografo.setEstadoActual(nuevoCambio);
     }
 
-    // -------------------------------------------------------------------------
-    // IMPLEMENTACIÓN DEL SELF: buscarCambioDeEstadoActual
     // Recorre la lista y manda el mensaje esEstadoActual() a cada elemento.
-    // -------------------------------------------------------------------------
 
     //Metodo 4 del patron
     public CambioEstado buscarCambioDeEstadoActual(List<CambioEstado> historialCambioEstado) {

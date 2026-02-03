@@ -7,6 +7,8 @@ import org.example.Modelos.MotivoTipo;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,7 +21,6 @@ public class IngresoObservacionCierre extends JFrame {
     private JPanel panelPrincipal;
     private JTextArea txtObservacion;
     private JButton btnConfirmar;
-    // private JButton btnCancelar; // ELIMINADO
 
     // Botón para volver atrás
     private JButton btnVolver;
@@ -51,14 +52,38 @@ public class IngresoObservacionCierre extends JFrame {
 
         gestor.registrarVentana(this);
 
-        // Confirmar
-        btnConfirmar.addActionListener(e -> confirmarObservacion());
+        // Listener del botón "Confirmar"
+        btnConfirmar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String observacion = txtObservacion.getText().trim();
 
-        // Volver (funciona como cancelar/atrás)
+                if (observacion.isEmpty()) {
+                    JOptionPane.showMessageDialog(IngresoObservacionCierre.this,
+                            "Debe ingresar una observación válida.",
+                            "Dato requerido",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Llamada al metodo público que actúa como puente, como en tu diseño original
+                tomarIngresoObservacionCierreInspeccion(observacion);
+
+                // El flujo continúa hacia el siguiente paso.
+                if (gestor.habilitarActualizarSituacionSismografo()) {
+                    new SeleccionMotivosYComentarios(gestor, motivosDisponibles);
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(IngresoObservacionCierre.this,
+                            "Ocurrió un error inesperado. Verifique los datos.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Listener del botón "Volver"
         btnVolver.addActionListener(e -> volverAtras());
-
-        // Enter = Confirmar (Opcional, a veces en TextAreas multilínea Enter es salto de línea)
-        // getRootPane().setDefaultButton(btnConfirmar);
 
         pack();
         setSize(new Dimension(900, 550));
@@ -84,7 +109,7 @@ public class IngresoObservacionCierre extends JFrame {
         btnVolver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnVolver.setToolTipText("Volver al paso anterior");
 
-        // --- RECUPERAR USUARIO LOGUEADO ---
+        // RECUPERAR USUARIO LOGUEADO
         String nombreMostrar = "Responsable";
         try {
             Empleado empleado = gestor.buscarEmpleadoLogueado();
@@ -180,35 +205,15 @@ public class IngresoObservacionCierre extends JFrame {
 
     /* ================= LÓGICA ================= */
 
-    private void confirmarObservacion() {
-        String observacion = txtObservacion.getText().trim();
+    //Este metodo actúa como puente entre la interfaz y el gestor para pasar la observación de cierre.
 
-        if (observacion.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Debe ingresar una observación válida.",
-                    "Dato requerido",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Paso 5
-        gestor.tomarIngresoObservacionCierreInspeccion(observacion);
-
-        // Paso 6
-        if (gestor.habilitarActualizarSituacionSismografo()) {
-            new SeleccionMotivosYComentarios(gestor, motivosDisponibles);
-            dispose();
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Ocurrió un error inesperado. Verifique los datos.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+    public void tomarIngresoObservacionCierreInspeccion(String observacionCierre) {
+        // Paso 5: La pantalla informa al gestor la observación.
+        gestor.tomarIngresoObservacionCierreInspeccion(observacionCierre);
     }
 
     private void volverAtras() {
-        // Al volver atrás, cancelamos el caso de uso (o podríamos volver a la pantalla anterior si el gestor lo permitiera)
-        // Por simplicidad y consistencia con el paso 1, cancelamos.
+        // Al volver atrás, cancelamos el caso de uso
         gestor.finCU();
         dispose();
     }

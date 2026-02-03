@@ -1,9 +1,8 @@
 package org.example.Main;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import org.example.Modelos.*;
+import org.example.Persistencia.JPAUtil;
 import org.example.Vistas.MenuPrincipal;
 
 import javax.swing.*;
@@ -22,6 +21,7 @@ public class Main {
         }
 
         // 2. Generar datos y obtener el USUARIO
+        // Este metodo ahora usará la misma BD que el resto de la app
         Usuario usuarioLogueado = generarDatosBase();
 
         if (usuarioLogueado == null) {
@@ -36,38 +36,36 @@ public class Main {
         // 4. Iniciar la Ventana Principal
         SwingUtilities.invokeLater(() -> {
             MenuPrincipal ventana = new MenuPrincipal(sesionActual);
-            ventana.setLocationRelativeTo(null);
-            ventana.setVisible(true);
+
         });
+
+        // Opcional pero recomendado: Añadir un hook para cerrar la fábrica al salir de la JVM
+        Runtime.getRuntime().addShutdownHook(new Thread(JPAUtil::shutdown));
     }
 
     private static Usuario generarDatosBase() {
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ppaiPU");
-        EntityManager em = emf.createEntityManager();
+        // NO creamos una fábrica local. Usamos la compartida de JPAUtil.
+        EntityManager em = JPAUtil.getEntityManager();
         Usuario usuario = null;
 
         try {
-            em.getTransaction().begin();
-
             // --- VERIFICACIÓN DE DATOS EXISTENTES ---
-            List<EstacionSismologica> existentes = em.createQuery(
-                            "SELECT e FROM EstacionSismologica e WHERE e.codEstacion = :cod", EstacionSismologica.class)
-                    .setParameter("cod", 123)
-                    .getResultList();
+            // Una forma más robusta es buscar un dato maestro, como un Rol.
+            long countRoles = em.createQuery("SELECT COUNT(r) FROM Rol r", Long.class).getSingleResult();
 
-            if (!existentes.isEmpty()) {
+            if (countRoles > 0) {
                 System.out.println("=== DATOS PREVIOS DETECTADOS. OMITIENDO CREACIÓN. ===");
+                // No necesitamos hacer commit si no cambiamos nada
                 List<Usuario> usuarios = em.createQuery("SELECT u FROM Usuario u", Usuario.class).getResultList();
-                em.getTransaction().commit();
-
                 if (!usuarios.isEmpty()) {
                     return usuarios.get(0);
                 } else {
-                    return null;
+                    return null; // No debería pasar si hay roles
                 }
             }
 
             // --- SI NO EXISTEN DATOS, PROCEDEMOS A CREARLOS ---
+            em.getTransaction().begin();
 
             // 1. Estados
             Estado estadoRealizada = new Estado("Completamente Realizada", "Orden lista", "Orden de Inspeccion");
@@ -92,8 +90,7 @@ public class Main {
             em.persist(motivo3);
             em.persist(motivo4);
 
-            // --- MOVIDO ARRIBA: 2. Rol, Empleado y Usuario ---
-            // Creamos el empleado ANTES que el sismógrafo para asignarlo como responsable del estado inicial
+            // 2. Rol, Empleado y Usuario
             Rol rol = new Rol("Tecnico", "Tecnico de mantenimiento");
             em.persist(rol);
 
@@ -103,7 +100,7 @@ public class Main {
             usuario = new Usuario("admin", "1234", empleado);
             em.persist(usuario);
 
-            // --- 3. Estación y Sismógrafo ---
+            // 3. Estación y Sismógrafo
             EstacionSismologica estacion = new EstacionSismologica();
             estacion.setNombre("Estacion Cordoba");
             estacion.setCodEstacion(123);
@@ -117,28 +114,20 @@ public class Main {
             sismografo.setNroSerie(1234);
             sismografo.setEstacionSismologica(estacion);
 
-            // CORRECCIÓN: Usamos el constructor actualizado de CambioEstado
-            //
             CambioEstado cambioInicial = new CambioEstado(estadoInhabilitado, LocalDateTime.now(), empleado);
-
-            // Aseguramos la relación bidireccional (si agregarCambioEstado lo hace, genial, sino esto refuerza)
             cambioInicial.setSismografo(sismografo);
-
             sismografo.agregarCambioEstado(cambioInicial);
             em.persist(sismografo);
 
-            // --- 4. Orden de Inspección ---
+            // 4. Orden de Inspección
             OrdenDeInspeccion orden = new OrdenDeInspeccion();
             orden.setNumeroDeOrden(1001);
-            // Fecha finalización ayer, para que aparezca ordenada primero
             orden.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(1));
             orden.setEstacionSismologica(estacion);
             orden.setEstado(estadoRealizada);
             orden.setEmpleado(empleado);
 
             em.persist(orden);
-
-            System.out.println("DEBUG MAIN: Orden creada con ID: " + orden.getId());
 
             em.getTransaction().commit();
             System.out.println("=== DATOS CARGADOS CORRECTAMENTE ===");
@@ -148,8 +137,8 @@ public class Main {
             e.printStackTrace();
             return null;
         } finally {
+            // Solo cerramos el EntityManager, NUNCA la fábrica aquí.
             em.close();
-            emf.close();
         }
         return usuario;
     }

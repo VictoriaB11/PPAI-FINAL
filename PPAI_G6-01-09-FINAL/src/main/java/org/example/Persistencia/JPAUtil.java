@@ -6,27 +6,39 @@ import jakarta.persistence.Persistence;
 
 public class JPAUtil {
 
-    private static final String PU_NAME = "ppaiPU";
-    private static EntityManagerFactory emf;
+    // Nombre de la unidad de persistencia (debe coincidir con persistence.xml)
+    private static final String PERSISTENCE_UNIT_NAME = "ppaiPU";
 
-    // Inicializa la fábrica una sola vez
-    public static void init() {
-        if (emf == null) {
-            emf = Persistence.createEntityManagerFactory(PU_NAME);
+    private static EntityManagerFactory factory;
+
+    // Bloque estático para inicializar la fábrica una sola vez
+    static {
+        try {
+            factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+        } catch (Throwable ex) {
+            System.err.println("Error al inicializar EntityManagerFactory: " + ex);
+            throw new ExceptionInInitializerError(ex);
         }
     }
 
-    // Devuelve un EntityManager nuevo (una "sesión" de DB)
+    /**
+     * Obtiene un EntityManager nuevo.
+     */
     public static EntityManager getEntityManager() {
-        init();
-        return emf.createEntityManager();
+        if (factory == null || !factory.isOpen()) {
+            factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+        }
+        return factory.createEntityManager();
     }
 
-    // Cierra la fábrica al final del programa
-    public static void close() {
-        if (emf != null) {
-            emf.close();
-            emf = null;
+    /**
+     * Cierra la fábrica de EntityManagers.
+     * Este es el método que te faltaba.
+     */
+    public static void shutdown() {
+        if (factory != null && factory.isOpen()) {
+            factory.close();
+            System.out.println("EntityManagerFactory cerrado correctamente.");
         }
     }
 }

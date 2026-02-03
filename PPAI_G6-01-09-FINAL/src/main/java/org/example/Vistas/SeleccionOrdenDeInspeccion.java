@@ -20,9 +20,6 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
     private JPanel panelPrincipal;
     private JComboBox<OrdenDeInspeccion> comboOrdenes;
     private JButton btnConfirmar;
-    // private JButton btnCancelar; // ELIMINADO
-
-    // Botón para volver atrás (hace las veces de cancelar)
     private JButton btnVolver;
 
     // Componentes de Estilo
@@ -60,10 +57,7 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
 
         // Listeners
         btnConfirmar.addActionListener(e -> tomarSelecOrdenDeInspeccion());
-
-        // Listener de Volver (funciona como cancelar/atrás)
         btnVolver.addActionListener(e -> volverAtras());
-
         comboOrdenes.addActionListener(e ->
                 btnConfirmar.setEnabled(comboOrdenes.getSelectedItem() != null));
 
@@ -74,7 +68,9 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
         setSize(new Dimension(900, 550));
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null);
-        setVisible(true);
+
+        // Llamada al método explícito como lo requiere el diseño
+        pedirOrdenesDeInspeccionRealizadas();
     }
 
     // =========================================================
@@ -100,7 +96,6 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
         try {
             Empleado empleado = gestor.buscarEmpleadoLogueado();
             if (empleado != null) {
-                // Asumiendo que Empleado tiene getNombre() y getApellido()
                 nombreMostrar = empleado.getNombre() + " " + empleado.getApellido();
             }
         } catch (Exception e) {
@@ -231,6 +226,12 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
                     "Sin resultados",
                     JOptionPane.INFORMATION_MESSAGE);
         }
+    }
+
+    //Este metodo es el responsable final de hacer visible la ventana para que el usuario pueda interactuar.
+
+    public void pedirOrdenesDeInspeccionRealizadas() {
+        setVisible(true);
     }
 
     public void tomarSelecOrdenDeInspeccion() {
