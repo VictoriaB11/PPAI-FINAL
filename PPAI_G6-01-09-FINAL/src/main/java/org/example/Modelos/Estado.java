@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "estado_orden")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) //para la herencia, toda la jerarquía se guarda en UNA tabla
 public class Estado {
 
     @Id

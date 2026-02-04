@@ -11,12 +11,7 @@ import jakarta.persistence.*;
  * Se eliminaron los campos duplicados (id, nombre, descripcion, ambito).
  */
 @Entity
-@Table(name = "estado_sismografo")
-// Nota: Al heredar de una Entidad (Estado), la estrategia de herencia se define usualmente en la clase PADRE (Estado).
-// Sin embargo, mantenemos la configuración aquí para tus subclases de EstadoSismografo.
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "tipo_estado")
-@PrimaryKeyJoinColumn(name = "id") // Enlaza el ID de esta tabla con el ID de la tabla 'estado_orden'
+@DiscriminatorValue("estado_sismografo") //etiqueta para saber que clase es
 public abstract class EstadoSismografo extends Estado {
 
     // NOTA: Se eliminó 'idEstado', 'nombre', 'descripcion' y 'ambito' porque ya existen en 'Estado'.
