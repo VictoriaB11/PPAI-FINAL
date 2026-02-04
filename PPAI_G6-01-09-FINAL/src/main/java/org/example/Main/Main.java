@@ -36,7 +36,6 @@ public class Main {
         // 4. Iniciar la Ventana Principal
         SwingUtilities.invokeLater(() -> {
             MenuPrincipal ventana = new MenuPrincipal(sesionActual);
-
         });
 
         // Opcional pero recomendado: Añadir un hook para cerrar la fábrica al salir de la JVM

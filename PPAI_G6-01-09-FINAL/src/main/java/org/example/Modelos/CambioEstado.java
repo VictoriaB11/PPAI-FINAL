@@ -1,7 +1,8 @@
 package org.example.Modelos;
 
 import jakarta.persistence.*;
-
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,11 @@ public class CambioEstado {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(columnDefinition = "TEXT")
     private LocalDateTime fechaHoraInicio;
+
+    @Column(columnDefinition = "TEXT")
     private LocalDateTime fechaHoraFin;
 
     @ManyToOne

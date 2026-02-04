@@ -1,6 +1,9 @@
 package org.example.Modelos;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,8 +17,12 @@ public class OrdenDeInspeccion {
     @Column(name = "numero_orden")
     private Integer numeroDeOrden;
 
+    @Column(columnDefinition = "TEXT")
     private LocalDateTime fechaHoraFinalizacion;
+
+    @Column(columnDefinition = "TEXT")
     private LocalDateTime fechaHoraCierre;
+
     private String observacionCierre;
 
     @ManyToOne

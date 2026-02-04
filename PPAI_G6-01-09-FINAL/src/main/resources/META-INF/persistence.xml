@@ -26,6 +26,8 @@
 
 
 
+
+
         <!--PU = Persistence Unit (Unidad de Persistencia), es el nombre de la configuración de JPA -->
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
