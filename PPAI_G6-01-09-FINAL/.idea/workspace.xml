@@ -5,21 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b8e10823-5406-4ad7-af2a-cad0e6073985" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/easycode.ignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/easycode/codebase-v2.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ppai.db" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Gestores/GestorRI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Gestores/GestorRI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Main/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Main/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Modelos/OrdenDeInspeccion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Modelos/OrdenDeInspeccion.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Vistas/ConfirmacionCierreOrden.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Vistas/ConfirmacionCierreOrden.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Vistas/IngresoObservacionCierre.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Vistas/IngresoObservacionCierre.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Vistas/MenuPrincipal.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Vistas/MenuPrincipal.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Vistas/SeleccionMotivosYComentarios.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Vistas/SeleccionMotivosYComentarios.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/example/Vistas/SeleccionOrdenDeInspeccion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/example/Vistas/SeleccionOrdenDeInspeccion.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

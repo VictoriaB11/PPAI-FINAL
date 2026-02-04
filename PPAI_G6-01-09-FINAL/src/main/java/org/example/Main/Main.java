@@ -143,7 +143,7 @@ public class Main {
             // 4. Orden de Inspección
             OrdenDeInspeccion orden = new OrdenDeInspeccion();
             orden.setNumeroDeOrden(1001);
-            orden.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(1));
+            orden.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(2));
             orden.setEstacionSismologica(estacion);
             orden.setEstado(estadoRealizada);
             orden.setEmpleado(empleado);
@@ -153,7 +153,7 @@ public class Main {
             // 4.2 Segunda Orden de Inspección
             OrdenDeInspeccion orden2 = new OrdenDeInspeccion();
             orden2.setNumeroDeOrden(1002);
-            orden2.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(2));
+            orden2.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(1));
             orden2.setEstacionSismologica(estacion2);
             orden2.setEstado(estadoRealizada);
             orden2.setEmpleado(empleado);
