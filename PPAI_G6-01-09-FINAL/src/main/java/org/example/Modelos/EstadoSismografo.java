@@ -1,4 +1,3 @@
-// java
 package org.example.Modelos;
 
 import java.time.LocalDateTime;
@@ -7,60 +6,64 @@ import java.util.Map;
 
 import jakarta.persistence.*;
 
-
 /**
- * Estado base para el patrón State.
- * Ajustar tipos de MotivoFueraDeServicio, CambioEstado y Empleado según tu modelo.
+ * EstadoSismografo ahora hereda de Estado.
+ * Se eliminaron los campos duplicados (id, nombre, descripcion, ambito).
  */
-
 @Entity
 @Table(name = "estado_sismografo")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) //Para que todas las subclases de Estado se guardan en UNA sola tabla
-@DiscriminatorColumn(name = "tipo_estado")  //Es una columna extra que Hibernate agrega para saber: “Esta fila corresponde a qué subclase concreta”.
-public abstract class EstadoSismografo {
+// Nota: Al heredar de una Entidad (Estado), la estrategia de herencia se define usualmente en la clase PADRE (Estado).
+// Sin embargo, mantenemos la configuración aquí para tus subclases de EstadoSismografo.
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_estado")
+@PrimaryKeyJoinColumn(name = "id") // Enlaza el ID de esta tabla con el ID de la tabla 'estado_orden'
+public abstract class EstadoSismografo extends Estado {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idEstado;
-
-    @Column(nullable = false)
-    protected String nombre;
-
-    protected String descripcion;
-    protected String ambito;
+    // NOTA: Se eliminó 'idEstado', 'nombre', 'descripcion' y 'ambito' porque ya existen en 'Estado'.
 
     protected EstadoSismografo() {
-        // constructor para frameworks/deserialización
+        super(); // Llama al constructor vacío de Estado
     }
 
     protected EstadoSismografo(String nombre, String descripcion, String ambito) {
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.ambito = ambito;
+        super(nombre, descripcion, ambito); // Pasa los valores al padre
     }
 
-    public Long getIdEstado() { return idEstado; }
-    public String getNombre() { return nombre; }
-    public String getDescripcion() { return descripcion; }
-    public String getAmbito() { return ambito; }
+    // No necesitamos getNombre(), getDescripcion(), etc., porque se heredan de Estado.
+    // Si necesitas acceder al ID, usa getId() (heredado de Estado).
 
-
+    @Override
     public boolean esAmbitoOrdenDeInspeccion() {
-        if (ambito == null) return false;
-        String a = ambito.trim();
+        // Mantenemos tu lógica específica que es más robusta que la del padre (maneja nulls y acentos)
+        String a = getAmbito(); // Usamos el getter heredado
+        if (a == null) return false;
+        a = a.trim();
         return a.equalsIgnoreCase("Orden de Inspeccion")
                 || a.equalsIgnoreCase("Orden de Inspección")
                 || a.equalsIgnoreCase("OrdenDeInspeccion");
     }
 
     public boolean esAmbitoSismografo() {
-        return ambito != null && ambito.equalsIgnoreCase("Sismografo");
+        // Usamos el getter heredado
+        return getAmbito() != null && getAmbito().equalsIgnoreCase("Sismografo");
     }
 
-    /* Queries polimórficas: por defecto false, los estados concretos sobreescriben lo que corresponda */
-    public boolean esCerrada() { return false; }
-    public boolean esCompletamenteRealizada() { return false; }
-    public boolean esFueraDeServicio() { return false; }
+    /* Queries polimórficas: Sobreescribimos los métodos del padre para el patrón State */
+
+    @Override
+    public boolean esCerrada() {
+        return false;
+    }
+
+    @Override
+    public boolean esCompletamenteRealizada() {
+        return false;
+    }
+
+    // Este método no existe en Estado, es propio de Sismografo
+    public boolean esFueraDeServicio() {
+        return false;
+    }
 
     /* Contratos que deben implementar los estados concretos */
     public abstract EstadoSismografo crearProximoEstado();
@@ -70,17 +73,9 @@ public abstract class EstadoSismografo {
                                                    Map<MotivoTipo, String> motivos,
                                                    Empleado RILogueado);
 
-
-    /**
-     * Implementación por defecto de ponerEnReparacion:
-     * - crea el nuevo CambioEstado delegando a la subclase
-     * - delega a Sismografo la responsabilidad de cerrar el anterior y registrar el nuevo
-     *
-     * Asume la existencia de la firma: Sismografo.setEstadoActual(CambioEstado)
-     */
     public abstract void ponerEnReparacion(Sismografo sismografo,
-                                  LocalDateTime fechaHoraInicio,
-                                  List<CambioEstado> cambiosEstado,
-                                  Map<MotivoTipo, String> motivos,
-                                  Empleado RILogueado);
+                                           LocalDateTime fechaHoraInicio,
+                                           List<CambioEstado> cambiosEstado,
+                                           Map<MotivoTipo, String> motivos,
+                                           Empleado RILogueado);
 }
