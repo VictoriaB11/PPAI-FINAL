@@ -9,6 +9,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +26,7 @@ public class IngresoObservacionCierre extends JFrame {
 
     // Botón para volver atrás
     private JButton btnVolver;
+    private JFrame ventanaAnterior;
 
     // Barra superior
     private JPanel panelTop;
@@ -34,12 +37,25 @@ public class IngresoObservacionCierre extends JFrame {
     private GestorRI gestor;
     private List<MotivoTipo> motivosDisponibles;
 
-    public IngresoObservacionCierre(GestorRI gestor, List<MotivoTipo> motivosDisponibles) {
+    public IngresoObservacionCierre(GestorRI gestor,
+                                    List<MotivoTipo> motivosDisponibles,
+                                    JFrame ventanaAnterior) {
+        this.ventanaAnterior = ventanaAnterior;
         this.gestor = gestor;
         this.motivosDisponibles = motivosDisponibles;
 
         setTitle("Ingreso de Observación de Cierre");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Si el usuario cierra con la X, cancelamos el Caso de Uso
+                gestor.finCU();
+                dispose();
+            }
+        });
+
 
         panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setOpaque(false);
@@ -71,8 +87,8 @@ public class IngresoObservacionCierre extends JFrame {
 
                 // El flujo continúa hacia el siguiente paso.
                 if (gestor.habilitarActualizarSituacionSismografo()) {
-                    new SeleccionMotivosYComentarios(gestor, motivosDisponibles);
-                    dispose();
+                    new SeleccionMotivosYComentarios(gestor, motivosDisponibles, IngresoObservacionCierre.this);
+                    setVisible(false);
                 } else {
                     JOptionPane.showMessageDialog(IngresoObservacionCierre.this,
                             "Ocurrió un error inesperado. Verifique los datos.",
@@ -213,10 +229,11 @@ public class IngresoObservacionCierre extends JFrame {
     }
 
     private void volverAtras() {
-        // Al volver atrás, cancelamos el caso de uso
-        gestor.finCU();
+        // Volvemos a la pantalla anterior sin cancelar el CU
+        ventanaAnterior.setVisible(true);
         dispose();
     }
+
 
     /* ================= FONDO ================= */
 

@@ -118,6 +118,28 @@ public class Main {
             sismografo.agregarCambioEstado(cambioInicial);
             em.persist(sismografo);
 
+            // 3.2. Segunda Estacion y Sismografo
+            EstacionSismologica estacion2 = new EstacionSismologica();
+            estacion2.setNombre("Estacion Mendoza");
+            estacion2.setCodEstacion(456);
+            estacion2.setLatitud(-32.89);
+            estacion2.setLongitud(-68.84);
+            em.persist(estacion2);
+
+            Sismografo sismografo2 = new Sismografo();
+            sismografo2.setFechaAdquisicion(LocalDate.now().minusYears(1));
+            sismografo2.setIdentificadorSismografo(888);
+            sismografo2.setNroSerie(5678);
+            sismografo2.setEstacionSismologica(estacion2);
+
+            CambioEstado cambioInicial2 =
+                    new CambioEstado(estadoInhabilitado, LocalDateTime.now().minusDays(10), empleado);
+            cambioInicial2.setSismografo(sismografo2);
+            sismografo2.agregarCambioEstado(cambioInicial2);
+
+            em.persist(sismografo2);
+
+
             // 4. Orden de Inspección
             OrdenDeInspeccion orden = new OrdenDeInspeccion();
             orden.setNumeroDeOrden(1001);
@@ -127,6 +149,16 @@ public class Main {
             orden.setEmpleado(empleado);
 
             em.persist(orden);
+
+            // 4.2 Segunda Orden de Inspección
+            OrdenDeInspeccion orden2 = new OrdenDeInspeccion();
+            orden2.setNumeroDeOrden(1002);
+            orden2.setFechaHoraFinalizacion(LocalDateTime.now().minusDays(2));
+            orden2.setEstacionSismologica(estacion2);
+            orden2.setEstado(estadoRealizada);
+            orden2.setEmpleado(empleado);
+
+            em.persist(orden2);
 
             em.getTransaction().commit();
             System.out.println("=== DATOS CARGADOS CORRECTAMENTE ===");

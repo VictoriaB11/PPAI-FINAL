@@ -97,7 +97,10 @@ public class GestorRI {
      */
     private void ordenarOrdenesDeInspeccionRealizadas(List<OrdenDeInspeccion> ordenesFiltradas) {
         if (ordenesFiltradas != null) {
-            ordenesFiltradas.sort(Comparator.comparing(OrdenDeInspeccion::getFechaHoraFinalizacion));
+            ordenesFiltradas.sort(
+                    Comparator.comparing(OrdenDeInspeccion::getFechaHoraFinalizacion)
+                            .reversed()
+            );
         }
     }
 

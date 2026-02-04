@@ -90,7 +90,9 @@ public class OrdenDeInspeccion {
 
     @Override
     public String toString() {
-        // Esto es lo que se muestra en el ComboBox
-        return "Orden N° " + numeroDeOrden + " (" + (estacionSismologica != null ? estacionSismologica.getNombre() : "?") + ")";
+        return "Orden N°: " + numeroDeOrden +
+                " | " + fechaHoraFinalizacion.toLocalDate() +
+                " | " + estacionSismologica.getNombre();
     }
+
 }

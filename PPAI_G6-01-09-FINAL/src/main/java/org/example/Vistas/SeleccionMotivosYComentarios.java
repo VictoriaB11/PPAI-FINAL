@@ -7,6 +7,8 @@ import org.example.Modelos.MotivoTipo;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +24,7 @@ public class SeleccionMotivosYComentarios extends JFrame {
     private JButton btnConfirmar;
     private JButton btnVolver; // Reemplaza a cancelar para volver atrás
     private JPanel contenedorLista; // Panel interno para el scroll
+    private JFrame ventanaAnterior;
 
     // Componentes Barra Superior
     private JPanel panelTop;
@@ -36,7 +39,10 @@ public class SeleccionMotivosYComentarios extends JFrame {
     private final List<MotivoTipo> motivosDisponibles;
     private final GestorRI gestor;
 
-    public SeleccionMotivosYComentarios(GestorRI gestor, List<MotivoTipo> motivosDisponibles) {
+    public SeleccionMotivosYComentarios(GestorRI gestor,
+                                        List<MotivoTipo> motivosDisponibles,
+                                        JFrame ventanaAnterior) {
+        this.ventanaAnterior = ventanaAnterior;
         this.gestor = gestor;
         this.motivosDisponibles = motivosDisponibles;
         this.checkBoxes = new ArrayList<>();
@@ -44,7 +50,16 @@ public class SeleccionMotivosYComentarios extends JFrame {
 
         // Configuración Ventana
         setTitle("Seleccionar Motivos y Cargar Comentarios");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Si el usuario cierra con la X, cancelamos el Caso de Uso
+                gestor.finCU();
+                dispose();
+            }
+        });
 
         // Setup Panel Principal y Fondo
         panelPrincipal = new JPanel(new BorderLayout());
@@ -156,14 +171,17 @@ public class SeleccionMotivosYComentarios extends JFrame {
         tomarIngresoComentarioMotivo(motivosYComentarios);
 
         // Avanzar al siguiente paso (Confirmación)
-        new ConfirmacionCierreOrden(gestor, gestor.buscarEstadosOrden());
-        dispose();
+        new ConfirmacionCierreOrden(gestor, gestor.buscarEstadosOrden(), this); // 🔹
+        setVisible(false);
+
     }
 
     private void volverAtras() {
-        gestor.finCU();
+        // Volvemos al paso anterior
+        ventanaAnterior.setVisible(true);
         dispose();
     }
+
 
     /* ================= BARRA SUPERIOR ================= */
 

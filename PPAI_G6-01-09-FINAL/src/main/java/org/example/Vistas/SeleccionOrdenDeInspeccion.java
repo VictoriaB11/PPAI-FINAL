@@ -9,6 +9,8 @@ import org.example.Modelos.OrdenDeInspeccion;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,6 +23,7 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
     private JComboBox<OrdenDeInspeccion> comboOrdenes;
     private JButton btnConfirmar;
     private JButton btnVolver;
+    private JFrame ventanaAnterior;
 
     // Componentes de Estilo
     private JPanel panelTop;
@@ -32,13 +35,26 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
     private List<MotivoTipo> motivos;
     private List<EstadoSismografo> estados;
 
-    public SeleccionOrdenDeInspeccion(GestorRI gestor, List<MotivoTipo> motivos, List<EstadoSismografo> estados) {
+    public SeleccionOrdenDeInspeccion(GestorRI gestor,
+                                      List<MotivoTipo> motivos,
+                                      List<EstadoSismografo> estados,
+                                      JFrame ventanaAnterior) {
         this.gestor = gestor;
         this.motivos = motivos;
         this.estados = estados;
+        this.ventanaAnterior = ventanaAnterior;
 
         setTitle("Seleccionar Orden de Inspección");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Si el usuario cierra con la X, cancelamos el Caso de Uso
+                gestor.finCU();
+                dispose();
+            }
+        });
 
         panelPrincipal = new JPanel(new BorderLayout());
         panelPrincipal.setOpaque(false);
@@ -248,15 +264,16 @@ public class SeleccionOrdenDeInspeccion extends JFrame {
 
     public void pedirIngresoObservacionDeCierre() {
         // Pasamos a la siguiente pantalla
-        new IngresoObservacionCierre(gestor, motivos);
-        dispose();
+        new IngresoObservacionCierre(gestor, motivos, this);
+        setVisible(false);
+
     }
 
     private void volverAtras() {
-        // Al volver atrás en el primer paso, cancelamos el caso de uso
-        gestor.finCU();
+        ventanaAnterior.setVisible(true); // Vuelve al menú
         dispose();
     }
+
 
     // =========================================================
     // Clases auxiliares para diseño
