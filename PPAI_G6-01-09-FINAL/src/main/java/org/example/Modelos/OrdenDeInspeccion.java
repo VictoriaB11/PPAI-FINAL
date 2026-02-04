@@ -65,9 +65,10 @@ public class OrdenDeInspeccion {
     }
 
     public boolean esCompletamenteRealizada() {
-        if (this.estado == null) return false;
-        // Usamos equalsIgnoreCase para evitar problemas de mayúsculas/minúsculas
-        return this.estado.getNombre().trim().equalsIgnoreCase("Completamente Realizada");
+        if (this.estado == null) {
+            return false;
+        }
+        return this.estado.esCompletamenteRealizada();
     }
 
     public String getDatos() {
