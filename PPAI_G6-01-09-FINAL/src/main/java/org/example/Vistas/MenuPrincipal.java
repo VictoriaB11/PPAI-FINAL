@@ -252,7 +252,8 @@ public class MenuPrincipal extends JFrame {
 
                 // 5. Abrir la siguiente ventana si hay resultados
                 if (ordenesFiltradas != null && !ordenesFiltradas.isEmpty()) {
-                    new SeleccionOrdenDeInspeccion(gestor, motivos, estados);
+                    new SeleccionOrdenDeInspeccion(gestor, motivos, estados, MenuPrincipal.this);
+                    setVisible(false);
                 } else {
                     JOptionPane.showMessageDialog(
                             MenuPrincipal.this,
