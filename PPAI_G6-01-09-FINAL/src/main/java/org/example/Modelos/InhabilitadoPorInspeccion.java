@@ -7,11 +7,7 @@ import java.util.Map;
 
 import jakarta.persistence.*;
 
-/**
- * Estado concreto: InhabilitadoPorInspeccion
- * Métodos en el orden del diagrama: ponerEnReparacion(array), buscarCambioDeEstadoActual,
- * crearProximoEstado, crearCambioDeEstado.
- */
+
 @Entity
 @DiscriminatorValue("InhabilitadaPorInspeccion")
 public class InhabilitadoPorInspeccion extends EstadoSismografo {
@@ -81,13 +77,16 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
     }
 
     // Metodo 9 del patron
-   @Override
-   public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
-                                         LocalDateTime fechaHoraInicio,
-                                         Map<MotivoTipo, String> motivos,
-                                         Empleado RILogueado) {
-
-       return new CambioEstado(proximoEstadoSismografo, fechaHoraInicio, RILogueado);
-   }
-
+    // Crea e inicia el nuevo cambioEstado del sismografo
+    @Override
+    // Primero recibe los parametros
+    public CambioEstado crearCambioEstado(EstadoSismografo proximoEstadoSismografo,
+                                          LocalDateTime fechaHoraInicio,
+                                          Map<MotivoTipo, String> motivos,
+                                          Empleado RILogueado) {
+        // Metodo 10 del patron
+        // el new instancia el CambioEstado y delega la creacion al constructor
+        // el return devuelve el cambio recien creado
+        return new CambioEstado(proximoEstadoSismografo, fechaHoraInicio, RILogueado);
+    }
 }

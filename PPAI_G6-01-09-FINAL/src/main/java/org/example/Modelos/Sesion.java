@@ -16,7 +16,7 @@ public class Sesion {
     private LocalDateTime fechaHoraInicio;
     private LocalDateTime fechaHoraFin;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false) //Muchos objetos apuntan a uno solo.
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 

@@ -21,7 +21,7 @@ public class Empleado {
 
     private String telefono;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false) //Muchos objetos apuntan a uno solo.
     @JoinColumn(name = "rol_id")
     private Rol rol;
 

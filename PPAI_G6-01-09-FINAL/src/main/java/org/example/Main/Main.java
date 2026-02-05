@@ -1,3 +1,20 @@
+/*
+Nuestra Tecnología:
+            Tecnología: Escritorio (Java Swing)
+            Lenguaje: Java
+            BD: SQLite (archivo .db)
+            Persistencia: JPA + Hibernate
+
+En el main usamos JPA solo para inicializar la base con datos de prueba si está
+vacía. Abrimos un EntityManager, verificamos si ya hay datos cargados; si
+existen no creamos nada. Si no existen, iniciamos una transacción y persistimos
+los datos iniciales. Al final confirmamos con commit y cerramos el EntityManager.
+El caso de uso CU37 no se ejecuta en el main; eso lo maneja el Gestor.
+
+EntityManager: es la conexion logica con la BD, mantiene un contexto de
+    persistencia, que es el conjunto de entidades managed que JPA está siguiendo en
+    ese momento. Se usa cada vez que queremos hablar con la base de datos
+ */
 package org.example.Main;
 
 import jakarta.persistence.EntityManager;

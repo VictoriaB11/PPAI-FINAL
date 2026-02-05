@@ -3,13 +3,9 @@ package org.example.Modelos;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
 import jakarta.persistence.*;
 
-/**
- * EstadoSismografo ahora hereda de Estado.
- * Se eliminaron los campos duplicados (id, nombre, descripcion, ambito).
- */
+//EstadoSismografo hereda de Estado.
 @Entity
 @DiscriminatorValue("estado_sismografo") //etiqueta para saber que clase es
 public abstract class EstadoSismografo extends Estado {

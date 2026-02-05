@@ -11,7 +11,7 @@ public class JPAUtil {
 
     private static EntityManagerFactory factory;
 
-    // Bloque estático para inicializar la fábrica una sola vez
+    // Bloque estático para inicializar una sola vez
     static {
         try {
             factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
@@ -33,7 +33,6 @@ public class JPAUtil {
 
     /**
      * Cierra la fábrica de EntityManagers.
-     * Este es el método que te faltaba.
      */
     public static void shutdown() {
         if (factory != null && factory.isOpen()) {

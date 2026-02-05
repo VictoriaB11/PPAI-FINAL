@@ -22,7 +22,7 @@ public class CambioEstado {
     @Column(columnDefinition = "TEXT")
     private LocalDateTime fechaHoraFin;
 
-    @ManyToOne
+    @ManyToOne //Muchos objetos apuntan a uno solo
     @JoinColumn(name = "empleado_id")
     private Empleado RILogueado;
 
@@ -53,10 +53,13 @@ public class CambioEstado {
     public CambioEstado() {
     }
 
+    // Constructor que inicializa un nuevo cambioEstado
+    // Le asigna al estado FueraDeServicio los parametros
     public CambioEstado(EstadoSismografo estadoSismografo, LocalDateTime fechaHoraInicio, Empleado RILogueado) {
         this.estadoSismografo = estadoSismografo;
         this.fechaHoraInicio = fechaHoraInicio;
         this.RILogueado = RILogueado;
+        // Inicializa un ArrayList vacio, para que el metodo 11 los agregue mas adelante
         this.motivosFueraDeServicio = new ArrayList<>();
     }
 
@@ -120,11 +123,15 @@ public class CambioEstado {
 
 
     //Metodo 11 del patron
+    // Asocia los motivos por los cuales el sismógrafo pasa a Fuera de Servicio.
+    // Recorre los motivos seleccionados
     public void crearMotivosFueraDeServicio(Map<MotivoTipo, String> motivosYComentarios) {
         // Inicializamos la lista si es nula
         if (this.motivosFueraDeServicio == null) {
             this.motivosFueraDeServicio = new ArrayList<>();
         }
+
+        // Por cada motivo crea un MotivoFueraDeServicio y lo vincula al CambioEstado
 
         if (motivosYComentarios != null) {
             for (Map.Entry<MotivoTipo, String> entry : motivosYComentarios.entrySet()) {
@@ -142,8 +149,6 @@ public class CambioEstado {
             }
         }
     }
-
-
 }
 
 

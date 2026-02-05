@@ -10,7 +10,7 @@ public class MotivoFueraDeServicio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional=false)
+    @ManyToOne(optional=false) //Muchos objetos apuntan a uno solo.
     @JoinColumn(name="cambio_estado_id")
     private CambioEstado cambioEstado;
 

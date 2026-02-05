@@ -21,9 +21,7 @@ public class Sismografo {
     @Column(name = "fecha_adquisicion")
     private LocalDate fechaAdquisicion;
 
-    /**
-     * Identificador funcional del sismógrafo, lo marcamos unique para que no se repita.
-     */
+    //lo marcamos unique para que no se repita.
     @Column(name = "identificador_sismografo", unique = true)
     private Integer identificadorSismografo;
 
@@ -31,7 +29,7 @@ public class Sismografo {
     private Integer nroSerie;
 
     /**
-     * Historial persistido.
+     * Un objeto se relaciona con uno solo del otro lado.
      * mappedBy: el "dueño" de la relación está en CambioEstado.sismografo
      * cascade: si guardo sismografo, se guardan sus cambios de estado.
      * orphanRemoval: si saco un cambio del historial, se borra en DB.
@@ -39,13 +37,11 @@ public class Sismografo {
     @OneToMany(mappedBy = "sismografo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CambioEstado> historialEstados = new ArrayList<>();
 
-    /**
-     * No lo persistimos: lo calculamos del historial (el que tiene fechaHoraFin = null).
-     */
+    //No lo persistimos: lo calculamos del historial (el que tiene fechaHoraFin = null).
     @Transient
     private CambioEstado ultimoCambioEstado;
 
-    @ManyToOne
+    @ManyToOne //Muchos objetos apuntan a uno solo, del lado de estacion hay un OneToMany
     @JoinColumn(name = "estacion_id")
     private EstacionSismologica estacionSismologica;
 

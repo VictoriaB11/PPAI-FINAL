@@ -29,11 +29,11 @@ public class OrdenDeInspeccion {
     @JoinColumn(name = "estacion_id")
     private EstacionSismologica estacionSismologica;
 
-    @ManyToOne
+    @ManyToOne //Muchos objetos apuntan a uno solo.
     @JoinColumn(name = "estado_id")
     private Estado estado;
 
-    @ManyToOne
+    @ManyToOne //Muchos objetos apuntan a uno solo.
     @JoinColumn(name = "empleado_id")
     private Empleado empleado;
 
@@ -57,10 +57,7 @@ public class OrdenDeInspeccion {
 
     // --- MÉTODOS CLAVE PARA EL FILTRADO ---
 
-    /**
-     * CORRECCIÓN IMPORTANTE:
-     * Comparamos por ID para asegurar que funcione aunque los objetos vengan de contextos distintos.
-     */
+   // Comparamos por ID para asegurar que funcione aunque los objetos vengan de contextos distintos.
     public boolean esEmpleado(Empleado empleadoLogueado) {
         if (this.empleado == null || empleadoLogueado == null) return false;
 

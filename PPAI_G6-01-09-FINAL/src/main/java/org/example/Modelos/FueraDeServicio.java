@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@DiscriminatorValue("FueraDeServicio")
+@DiscriminatorValue("FueraDeServicio") //es una etiqueta que JPA usa para saber qué tipo de estado concreto debe crear cuando lee los datos de la base
 public class FueraDeServicio extends EstadoSismografo {
 
     public FueraDeServicio() {

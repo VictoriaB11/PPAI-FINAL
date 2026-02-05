@@ -310,36 +310,41 @@ public class GestorRI {
 
     // Métodos de búsqueda para inyección de datos y persistencia ---
 
+    //EntityManager: es la conexion logica con la BD, mantiene un contexto de persistencia, que es el conjunto de entidades managed que JPA está siguiendo en ese momento.
+    //Se usa cada vez que queremos hablar con la base de datos
+    //Managed: JPA está atento a ese objeto, si cambia algo y se hace el commit, se guarda solo.
+
+    //Guarda en memoria una lista estadosDisponibles
     private EstadoSismografo buscarEstadoFueraDeServicioParaSismografo() {
+        //Si la lista está vacía, va a la BD y trae todos los Estados del Sismografo.
         if (this.estadosDisponibles == null || this.estadosDisponibles.isEmpty()) {
             try (EntityManager em = JPAUtil.getEntityManager()) {
                 this.estadosDisponibles = em.createQuery("SELECT e FROM EstadoSismografo e", EstadoSismografo.class).getResultList();
             }
         }
+        //Busca en esa lista cuál es “Fuera de Servicio” usando el método: estado.esFueraDeServicio()
         for (EstadoSismografo estado : this.estadosDisponibles) {
             if (estado.esFueraDeServicio()) {
+                //Devuelve ese estado, o null si no existe.
                 return estado;
             }
         }
         return null;
     }
 
+    //Guarda en memoria los sismografos Disponibles.
     public Sismografo buscarSismografoPorEstacion(EstacionSismologica estacion) {
         if (sismografosDisponibles == null || sismografosDisponibles.isEmpty()) {
             try (EntityManager em = JPAUtil.getEntityManager()) {
-                // CORRECCIÓN AQUÍ:
-                // Agregamos "LEFT JOIN FETCH s.historialEstados"
-                // Esto obliga a traer la lista de historial junto con el sismógrafo
-                // antes de cerrar el EntityManager.
+                //Trae los sismógrafos desde la BD con la query
                 sismografosDisponibles = em.createQuery(
                         "SELECT s FROM Sismografo s " +
-                                "JOIN FETCH s.estacionSismologica " +
-                                "LEFT JOIN FETCH s.historialEstados", // <--- ESTA LÍNEA ES LA SOLUCIÓN
+                                "JOIN FETCH s.estacionSismologica " + //trae la estación junto con el sismógrafo
+                                "LEFT JOIN FETCH s.historialEstados", //trae el historial de estados
                         Sismografo.class).getResultList();
             }
         }
-
-        // La lógica de búsqueda en memoria sigue igual
+        //Los busca en memoria el que corresponda a la estación por id.
         for (Sismografo sismografo : sismografosDisponibles) {
             // Comparamos por ID para mayor seguridad
             if (sismografo.getEstacionSismologica().getId().equals(estacion.getId())) {
@@ -349,29 +354,29 @@ public class GestorRI {
         return null;
     }
 
+    //Consulta todos los Estado cuyo ambito sea 'Orden de Inspeccion'
     public List<Estado> buscarEstadosOrden() {
         try (EntityManager em = JPAUtil.getEntityManager()) {
+            //Devuelve la lista
             return em.createQuery("SELECT e FROM Estado e WHERE e.ambito = 'Orden de Inspeccion'", Estado.class).getResultList();
         }
     }
 
+    //En el CU cambia la orden y el sismografo
+    // Este toma esos cambios que están en memoria y los guarda definitivamente en la bd.
     private void guardarCierreEnBD(OrdenDeInspeccion orden, Sismografo sismografo) {
-        try (EntityManager em = JPAUtil.getEntityManager()) {
-            em.getTransaction().begin();
-            OrdenDeInspeccion ordenManaged = em.merge(orden);
+        try (EntityManager em = JPAUtil.getEntityManager()) { //Para hablar con la bd
+            em.getTransaction().begin(); //Todo lo que hace desde ahora hasta el commit es una sola operación por si algo falla
+            OrdenDeInspeccion ordenManaged = em.merge(orden); //merge lo que hace es guardar los cambios
             Sismografo sismografoManaged = em.merge(sismografo);
-            em.getTransaction().commit();
-
-            // Actualizar referencias locales con las entidades gestionadas
+            em.getTransaction().commit(); //commit guarda los datos en la bd, seria que hibernate genera los UPDATE, INSERT y los ejecuta en SQLite
             this.ordenSeleccionada = ordenManaged;
-        } catch (Exception ex) {
+        } catch (Exception ex) { //si algo falla, lanza una exepcion
             ex.printStackTrace();
-            // Considerar relanzar una excepción personalizada
         }
     }
 
     // Getters para las Vistas
-
     public OrdenDeInspeccion getOrdenSeleccionada() {
         return ordenSeleccionada;
     }

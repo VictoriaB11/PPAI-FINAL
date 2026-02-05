@@ -31,7 +31,7 @@ public class EstacionSismologica {
     private Sismografo sismografo;
 
 
-    // Una estación tiene muchos sismógrafos
+    // Un objeto tiene una lista del otro, hay un ManyToOne en Sismografo
     @OneToMany(mappedBy = "estacionSismologica", cascade = CascadeType.ALL)
     private List<Sismografo> sismografos = new ArrayList<>();
 
