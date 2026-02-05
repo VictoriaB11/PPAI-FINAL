@@ -76,7 +76,10 @@ public class CambioEstado {
         return fechaHoraInicio;
     }
 
-    //Metodo 5 del patron
+    // Metodo 5 del patrón:
+    // Determina si este cambio de estado es el vigente.
+    // Un estado se considera actual cuando no posee fechaHoraFin,
+    // delegando en el propio CambioEstado el criterio de vigencia.
     public boolean esEstadoActual() {
 
         return fechaHoraFin == null;
@@ -84,7 +87,6 @@ public class CambioEstado {
 
     //Metodo 6 del patron
     public void setFechaHoraFin(LocalDateTime fechaHoraFin) {
-
         this.fechaHoraFin = fechaHoraFin;
     }
 

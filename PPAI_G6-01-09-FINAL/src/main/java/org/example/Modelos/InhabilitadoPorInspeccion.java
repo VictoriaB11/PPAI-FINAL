@@ -17,6 +17,7 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
     }
 
     //Metodo 3 del patron
+    // Metodo polimórfico: gestiona la transición a FueraDeServicio
     @Override
     public void ponerEnReparacion(Sismografo sismografo,
                                   LocalDateTime fechaHoraActual,
@@ -41,10 +42,13 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
 
         // PASO D: Crear el nuevo CambioEstado (new)
         // Usamos el constructor que definimos en CambioEstado para "nuevos" estados
+        // y se registran los motivos asociados
         CambioEstado nuevoCambio = this.crearCambioEstado(proximoEstadoSismografo, fechaHoraActual, motivos, RILogueado);
         nuevoCambio.crearMotivosFueraDeServicio(motivos);
 
         // PASO E: Actualizar Sismógrafo
+        // Se registra el nuevo cambio en el historial
+        // y se actualiza el estado actual del sismógrafo
         if (sismografo.getHistorialEstados() != null) {
             sismografo.getHistorialEstados().add(nuevoCambio);
         }
@@ -52,9 +56,10 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
         sismografo.setEstadoActual(nuevoCambio);
     }
 
-    // Recorre la lista y manda el mensaje esEstadoActual() a cada elemento.
-
-    //Metodo 4 del patron
+    // Metodo 4 del patrón
+    // Busca en el historial el cambio de estado actual,
+    // delegando en cada CambioEstado la responsabilidad
+    // de determinar si sigue vigente mediante esEstadoActual()
     public CambioEstado buscarCambioDeEstadoActual(List<CambioEstado> historialCambioEstado) {
         if (historialCambioEstado != null) {
             for (CambioEstado cambio : historialCambioEstado) {
@@ -66,7 +71,6 @@ public class InhabilitadoPorInspeccion extends EstadoSismografo {
         }
         return null;
     }
-
 
     //Metodo 7 del patron
     // crearProximoEstado(): según diagrama -> FueraDeServicio
